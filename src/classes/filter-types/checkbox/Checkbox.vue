@@ -100,19 +100,10 @@
                     promise = this.getValuesRelationship( collectionTarget, null, [], 0, this.filter.max_options, false, '1');
                     promise.request
                         .then(() => {
-<<<<<<< HEAD
-
-=======
->>>>>>> develop
                             this.isLoading = false;
                             if(this.options.length > this.filter.max_options){
                                 this.options.splice(this.filter.max_options);
                             }
-<<<<<<< HEAD
-
-=======
-                            this.selectedValues();
->>>>>>> develop
                         }).catch((error) => {
                             this.$console.error(error);
                     }) 
@@ -126,16 +117,11 @@
                             if(this.options.length > this.filter.max_options){
                                 this.options.splice(this.filter.max_options);
                             }
-<<<<<<< HEAD
                             
-=======
-                            this.selectedValues();
->>>>>>> develop
                         }).catch((error) => {
                             this.$console.error(error);
                         });
                 }
-<<<<<<< HEAD
                 if (skipSelected == undefined || skipSelected == false) {
                     promise
                         .then(() => {
@@ -148,22 +134,6 @@
                         });
                 }
                 
-=======
-
-                // promise.request
-                //     .then(() => {
-                //         this.isLoading = false;
-                        
-                //     })
-                //     .catch( error => {
-                //         this.$console.log('error select', error );
-                //         this.isLoading = false;
-                //     });
-
-                // Search Request Token for cancelling
-                this.getOptionsValuesCancel = promise.source;
-
->>>>>>> develop
             },
             onSelect() {
                 this.$emit('input', {
