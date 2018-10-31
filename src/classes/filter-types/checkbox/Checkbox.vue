@@ -123,7 +123,7 @@
                         });
                 }
                 if (skipSelected == undefined || skipSelected == false) {
-                    promise
+                    promise.request
                         .then(() => {
                             this.isLoading = false;
                             this.selectedValues()
