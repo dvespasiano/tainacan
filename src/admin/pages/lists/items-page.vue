@@ -1,6 +1,11 @@
 <template>
-    <div 
+    <!-- <div <IF WE USE HAMMERJS>
             v-hammer:swipe="onSwipeFiltersMenu"
+            :class="{
+                    'repository-level-page': isRepositoryLevel,
+                    'is-fullscreen': registeredViewModes[viewMode] != undefined && registeredViewModes[viewMode].full_screen
+            }"> -->
+    <div 
             :class="{
                     'repository-level-page': isRepositoryLevel,
                     'is-fullscreen': registeredViewModes[viewMode] != undefined && registeredViewModes[viewMode].full_screen
@@ -309,7 +314,7 @@
                                     v-for="(viewModeOption, index) of enabledViewModes"
                                     :key="index"
                                     :value="viewModeOption"
-                                    v-if="registeredViewModes[viewModeOption] != undefined">
+                                    v-if="registeredViewModes[viewModeOption] != undefined && registeredViewModes[viewModeOption].full_screen == false">
                                 <span 
                                         class="gray-icon"
                                         v-html="registeredViewModes[viewModeOption].icon"/>
@@ -386,6 +391,24 @@
                             </b-dropdown-item>
                         </b-dropdown>
                     </b-field>
+                </div>
+
+                <!-- Theme Full Screen mode, it's just a special view mode -->
+                <div 
+                        v-if="isOnTheme"
+                        class="search-control-item">
+                    <button 
+                            class="button is-white"
+                            @click="onChangeViewMode(viewModeOption)"
+                            v-for="(viewModeOption, index) of enabledViewModes"
+                            :key="index"
+                            :value="viewModeOption"
+                            v-if="registeredViewModes[viewModeOption] != undefined && registeredViewModes[viewModeOption].full_screen == true ">
+                        <span 
+                                class="gray-icon"
+                                v-html="registeredViewModes[viewModeOption].icon"/>
+                        <span class="is-hidden-touch">{{ registeredViewModes[viewModeOption].label }}</span>
+                    </button>
                 </div>
 
                 <!-- Text simple search (used on mobile, instead of the one from filter list)-->
@@ -1046,7 +1069,7 @@
                                 '3': (this.isRepositoryLevel ? 'title' : null),
                                 '4': (this.isRepositoryLevel ? 'description' : null),
                             });
-
+                            
                             // Sorting metadata
                             if (this.isRepositoryLevel) {
                                 this.sortingMetadata.push({
@@ -1122,6 +1145,19 @@
                         this.searchControlHeight = this.$refs['search-control'] ? this.$refs['search-control'].clientHeight + this.$refs['search-control'].offsetTop : 0;
                     this.isFiltersMenuCompressed = jQuery(window).width() <= 768;
                 });
+            },
+            removeEventListeners() {
+                // Component
+                this.$off();
+                // Window
+                window.removeEventListener('resize', this.adjustSearchControlHeight);
+                // $root
+                this.$root.$off('openAdvancedSearch');
+                // $eventBusSearch
+                this.$eventBusSearch.$off('isLoadingItems');
+                this.$eventBusSearch.$off('hasFiltered');
+                this.$eventBusSearch.$off('advancedSearchResults');
+                this.$eventBusSearch.$off('hasToPrepareMetadataAndFilters');
             }
         },
         created() {
@@ -1135,6 +1171,7 @@
 
             this.$eventBusSearch.$on('isLoadingItems', isLoadingItems => {
                 this.isLoadingItems = isLoadingItems;
+
             });
 
             this.$eventBusSearch.$on('hasFiltered', hasFiltered => {
@@ -1147,11 +1184,11 @@
             });
 
             this.$eventBusSearch.$on('hasToPrepareMetadataAndFilters', (to) => {
-                /* This condition is to prevent a incorrect fetch by filter or metadata when we come from items
+                /* This condition is to prevent a incorrect fetch by filter or metadata when we coming from items
                  * at collection level to items page at repository level
                  */
 
-                if (this.isOnTheme || this.collectionId === to.params.collectionId) {
+                if (this.isOnTheme || this.collectionId === to.params.collectionId || to.query.fromBreadcrumb) {
                     this.prepareMetadata();
                     this.prepareFilters();
                 }
@@ -1171,6 +1208,10 @@
             this.prepareFilters();
             this.prepareMetadata();
             this.localDisplayedMetadata = JSON.parse(JSON.stringify(this.displayedMetadata));
+
+            // Updates Collection Header Breadcrumb
+            if (!this.isOnTheme)
+                this.$root.$emit('onCollectionBreadCrumbUpdate', [{ path: '', label: this.$i18n.get('items') }]);
 
             // Setting initial view mode on Theme
             if (this.isOnTheme) {
@@ -1215,8 +1256,12 @@
             window.addEventListener('resize', this.adjustSearchControlHeight);
         },
         beforeDestroy() {
-            this.$off();
-            window.removeEventListener('resize', this.adjustSearchControlHeight);
+            this.removeEventListeners();
+            
+            // Cancels previous Request
+            if (this.$eventBusSearch.searchCancel != undefined)
+                this.$eventBusSearch.searchCancel.cancel('Item search Canceled.');
+
         }
     }
 </script>

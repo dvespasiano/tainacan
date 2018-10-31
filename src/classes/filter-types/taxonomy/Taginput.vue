@@ -48,38 +48,7 @@
                     this.selectedValues( metadatum.metadata_type_options.taxonomy_id );
                 });
             
-            this.$eventBusSearch.$on('removeFromFilterTag', (filterTag) => {
-               
-                if (filterTag.filterId == this.filter.id) {
-
-                    let selectedIndex = this.selected.findIndex(option => option.label == filterTag.singleValue);
-                    if (selectedIndex >= 0) {
-
-                        this.selected.splice(selectedIndex, 1);
-
-                        let values = [];
-                        let labels = [];
-                        for(let val of this.selected){
-                            values.push( val.value );
-                            labels.push( val.label );
-                        }
-                        
-                        this.$emit('input', {
-                            filter: 'taginput',
-                            compare: 'IN',
-                            taxonomy: this.taxonomy,
-                            metadatum_id: ( this.metadatum_id ) ? this.metadatum_id : this.filter.metadatum,
-                            collection_id: ( this.collection_id ) ? this.collection_id : this.filter.collection_id,
-                            terms: values
-                        });
-                        this.$eventBusSearch.$emit( 'sendValuesToTags', {
-                            filterId: this.filter.id,
-                            value: labels
-                        });
-
-                   }
-                }
-            });
+            this.$eventBusSearch.$on('removeFromFilterTag', this.cleanSearchFromTag);
         },
         data(){
             return {
@@ -134,7 +103,7 @@
             }
         },
         methods: {
-            search( query ){
+            search: _.debounce( function(query) {
                 this.isLoading = true;
                 this.options = [];
                 
@@ -171,7 +140,7 @@
                     this.isLoading = false;
                     this.$console.log(error);
                 });
-            },
+            }, 500),
             selectedValues( taxonomy ){
                 if ( !this.query || !this.query.taxquery || !Array.isArray( this.query.taxquery ) )
                     return false;
@@ -195,7 +164,42 @@
                 .catch(error => {
                     this.$console.log(error);
                 });
+            },
+            cleanSearchFromTag(filterTag) {
+                               
+                if (filterTag.filterId == this.filter.id) {
+
+                    let selectedIndex = this.selected.findIndex(option => option.label == filterTag.singleValue);
+                    if (selectedIndex >= 0) {
+
+                        this.selected.splice(selectedIndex, 1);
+
+                        let values = [];
+                        let labels = [];
+                        for(let val of this.selected){
+                            values.push( val.value );
+                            labels.push( val.label );
+                        }
+                        
+                        this.$emit('input', {
+                            filter: 'taginput',
+                            compare: 'IN',
+                            taxonomy: this.taxonomy,
+                            metadatum_id: ( this.metadatum_id ) ? this.metadatum_id : this.filter.metadatum,
+                            collection_id: ( this.collection_id ) ? this.collection_id : this.filter.collection_id,
+                            terms: values
+                        });
+                        this.$eventBusSearch.$emit( 'sendValuesToTags', {
+                            filterId: this.filter.id,
+                            value: labels
+                        });
+
+                   }
+                }
             }
+        },
+        beforeDestroy() {
+            this.$eventBusSearch.$off('removeFromFilterTag', this.cleanSearchFromTags);
         }
     }
 </script>

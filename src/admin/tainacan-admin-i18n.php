@@ -31,6 +31,7 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'mapping'                                        => __( 'Mapping', 'tainacan' ),
 	'importers'                                      => __( 'Importers', 'tainacan' ),
 	'processes'                                      => __( 'Processes', 'tainacan' ),
+	'sequence'                                       => __( 'Sequence', 'tainacan' ),
 
 	// Actions
 	'close'                                          => __( 'Close', 'tainacan' ),
@@ -44,6 +45,7 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'remove_value'                                   => __( 'Remove value', 'tainacan' ),
 	'save'                                           => __( 'Save', 'tainacan' ),
 	'next'                                           => __( 'Next', 'tainacan' ),
+	'previous'                                       => __( 'Previous', 'tainacan' ),
 	'back'                                           => __( 'Back', 'tainacan' ),
 	'exit'                                           => __( 'Exit', 'tainacan' ),
 	'see'                                            => __( 'View', 'tainacan' ),
@@ -232,7 +234,8 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'label_delete_permanently'                       => __( 'Delete permanently', 'tainacan' ),
 	'label_send_to_trash'                            => __( 'Send to trash', 'tainacan' ),
 	'label_delete_selected_taxonomies'               => __( 'Delete selected taxonomies', 'tainacan' ),
-	'label_edit_selected_items'                      => __( 'Edit selected items', 'tainacan' ),
+	'label_bulk_edit_selected_items'                 => __( 'Bulk edit selected items', 'tainacan' ),
+	'label_sequence_edit_selected_items'             => __( 'Edit selected items in sequence', 'tainacan' ),
 	'label_edit_selected_taxonomies'                 => __( 'Edit selected taxonomies', 'tainacan' ),
 	'label_select_all_collections_page'              => __( 'Select all collections on page', 'tainacan' ),
 	'label_select_all_items_page'                    => __( 'Select all items on page', 'tainacan' ),
@@ -261,6 +264,7 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'label_url_source_link'                          => __( 'URL Source link', 'tainacan' ),
 	'label_metadata_mapping'                         => __( 'Metadata mapping', 'tainacan' ),
 	'label_select_metadatum'                         => __( 'Select metadatum', 'tainacan' ),
+	'label_create_metadatum'                         => __( 'Create metadatum', 'tainacan' ),
 	'label_select_metadatum_type'                    => __( 'Select a metadatum type', 'tainacan' ),
 	'label_add_more_metadata'                        => __( 'Add more metadata', 'tainacan' ),
 	'label_from_source_collection'                   => __( 'From source collection', 'tainacan' ),
@@ -310,6 +314,8 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'label_show_metadata'	                     	 => __( 'Show metadata', 'tainacan' ),
 	'label_all_terms'                                => __( 'All terms', 'tainacan' ),
 	'label_selected_terms'                           => __( 'Selected terms', 'tainacan'),
+	'label_editing_item_number'                      => __( 'Editing item n.', 'tainacan'),
+	'label_sequence_editing_item'                    => __( 'Sequence editing: Item', 'tainacan'),
 
 	// Instructions. More complex sentences to guide user and placeholders
 	'instruction_delete_selected_collections'        => __( 'Delete selected collections', 'tainacan' ),
@@ -404,7 +410,7 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'info_warning_metadata_not_saved'                => __( 'Are you sure? There are metadata not saved, changes will be lost.', 'tainacan' ),
 	'info_warning_filters_not_saved'                 => __( 'Are you sure? There are filters not saved, changes will be lost.', 'tainacan' ),
 	'info_no_description_provided'                   => __( 'No description provided.', 'tainacan' ),
-	'info_warning_taxonomy_not_saved'                => __( 'Are you sure? The metadata is not saved, changes will be lost.', 'tainacan' ),
+	'info_warning_taxonomy_not_saved'                => __( 'Are you sure? The taxonomy is not saved, changes will be lost.', 'tainacan' ),
 	'info_warning_terms_not_saved'                   => __( 'Are you sure? There are terms not saved, changes will be lost.', 'tainacan' ),
 	'info_warning_orphan_terms'                      => __( 'Are you sure? This term is parent of other terms. These will be converted to root terms.', 'tainacan' ),
 	'info_no_events'                                 => __( 'No events', 'tainacan' ),

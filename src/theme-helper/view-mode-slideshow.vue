@@ -88,25 +88,28 @@
 
         </aside>
         <div 
-                :class="{ 'spaced-to-right': !isMetadataCompressed }"
+                :class="{ 'fullscreen-spaced-to-right': !isMetadataCompressed }"
                 @keyup.left.prevent="slideIndex > 0 ? prevSlide() : null"
                 @keyup.right.prevent="slideIndex < slideItems.length - 1 ? nextSlide() : null">
             <div class="table-wrapper">
 
                 <!-- SLIDE MAIN VIEW-->
-                <section class="tainacan-slide-main-view">
+                <section 
+                        @click.prevent.stop="onHideControls()"
+                        class="tainacan-slide-main-view">
                     <button 
-                            @click.prevent="prevSlide()"
+                            @click.stop.prevent="prevSlide()"
                             :style="{ visibility: (page > 1 && slideIndex <= 0) || slideIndex > 0 ? 'visible' : 'hidden' }"
                             class="slide-control-arrow arrow-left">
                         <span class="icon is-large">
                             <icon class="mdi mdi-48px mdi-chevron-left"/>
                         </span> 
                     </button>
-                    <div 
-                            @click.prevent="onHideControls()"
+                    <div     
+                            class="slide-main-content">
+                    <!-- <div <IF WE USE HAMMER JS>
                             class="slide-main-content"
-                            v-hammer:swipe.prevent="onSwipeFiltersMenu">
+                            v-hammer:swipe.prevent="onSwipeFiltersMenu"> -->
                         <transition 
                                 mode="out-in"
                                 :name="goingRight ? 'slide-right' : 'slide-left'" >
@@ -132,7 +135,7 @@
                                     v-if="!isLoadingItem && slideItems.length > 0 && (item.document != undefined && item.document != undefined && item.document != '')"
                                     v-html="item.document_as_html" />  
                             <div v-else>
-                                <div class="empty_document">
+                                <div class="empty-document">
                                     <p>{{ $i18n.get('label_document_empty') }}</p>
                                     <img 
                                             :alt="$i18n.get('label_document_empty')" 
@@ -142,7 +145,7 @@
                         </transition>
                     </div>
                     <button 
-                            @click.prevent="nextSlide()"
+                            @click.stop.prevent="nextSlide()"
                             :style="{ visibility: (slideIndex < slideItems.length - 1) || page < totalPages ? 'visible' : 'hidden' }"
                             class="slide-control-arrow arrow-right">
                         <span class="icon is-large has-text-turoquoise5">
@@ -150,26 +153,28 @@
                         </span>
                     </button>
                 </section>
-                <section 
-                        v-if="slideItems[slideIndex] != undefined"
-                        class="slide-title-area">
-                    <h1>{{ slideItems[slideIndex].title }}</h1>
-                    <button 
-                            :disabled="(slideIndex == slideItems.length - 1 && page == totalPages)"
-                            class="play-button"
-                            @click="isPlaying = !isPlaying">
-                        <b-icon
-                                type="is-secondary" 
-                                size="is-medium"
-                                :icon="isPlaying ? 'pause-circle' : 'play-circle' "/>
-                        <circular-counter 
-                                v-if="isPlaying"
-                                :time="this.slideTimeout/1000" />
-                    </button>
-                </section>
+
 
                 <!-- SLIDE ITEMS LIST --> 
                 <div class="tainacan-slides-list">
+                    <section 
+                            @click.prevent="onHideControls()"
+                            v-if="slideItems[slideIndex] != undefined" 
+                            class="slide-title-area">
+                        <h1>{{ slideItems[slideIndex].title }}</h1>
+                        <button 
+                                :disabled="(slideIndex == slideItems.length - 1 && page == totalPages)"
+                                class="play-button"
+                                @click.stop.prevent="isPlaying = !isPlaying">
+                            <b-icon
+                                    type="is-secondary" 
+                                    size="is-medium"
+                                    :icon="isPlaying ? 'pause-circle' : 'play-circle' "/>
+                            <circular-counter 
+                                    v-if="isPlaying"
+                                    :time="this.slideTimeout/1000" />
+                        </button>
+                    </section>
                     <swiper 
                             @slideChange="onSlideChange()"
                             ref="mySwiper"
@@ -177,7 +182,6 @@
                             id="tainacan-slide-container">
                         <swiper-slide 
                                 :ref="'thumb-' + item.id"
-                                @click="slideIndex = index;"
                                 :key="index"
                                 v-for="(item, index) of slideItems"
                                 class="tainacan-slide-item"
@@ -234,9 +238,9 @@ import axios from '../js/axios/axios.js';
 import 'swiper/dist/css/swiper.css';
 import { swiper, swiperSlide } from 'vue-awesome-swiper';
 import CircularCounter from '../admin/components/other/circular-counter.vue';
-
+ 
 export default {
-    name: 'ViewModeSlide',
+    name: 'ViewModeSlideshow',
     props: {
         collectionId: Number,
         displayedMetadata: Array,
@@ -264,6 +268,7 @@ export default {
             slideIndex: 0,
             minPage: 1,
             maxPage: 1,
+            readjustedSlideIndex: 0,
             preloadedItem: {},
             swiperOption: {
                 mousewheel: true,
@@ -271,7 +276,7 @@ export default {
                 keyboard: true,
                 preventInteractionOnTransition: true,
                 allowClick: true,
-                allowTouchMove: true,
+                allowTouchMove: true, 
                 slidesPerView: 18,
                 slidesPerGroup: 1,
                 centeredSlides: true,
@@ -300,6 +305,7 @@ export default {
             return this.getItem();
         },
         page() {
+            this.setMaxAndMinPages();
             return this.getPage();
         },
         totalPages() {
@@ -307,17 +313,10 @@ export default {
         }
     },
     watch: {
-        page: {
-            handler() {
-                this.minPage = this.page < this.minPage ? this.page : this.minPage;
-                this.maxPage = this.page > this.maxPage ? this.page : this.maxPage;
-            },
-            immediate: true
-        },
         items: {
             handler () {
                 if (this.items.length > 0) {
-                    let updatedSlideIndex = this.slideIndex != undefined ? JSON.parse(JSON.stringify(this.slideIndex)) : 0;
+                    let updatedSlideIndex = this.slideIndex != undefined ? (this.slideIndex + 0) : 0;
 
                     // Loops through new items list. Depending on direction, goes from start or end of list.
                     for (let newItem of ((this.goingRight) ? this.items : JSON.parse(JSON.stringify(this.items)).reverse())) {
@@ -327,7 +326,7 @@ export default {
                                 this.slideItems.push(newItem);
                             } else {
                                 this.slideItems.unshift(newItem);
-                                updatedSlideIndex++;
+                                updatedSlideIndex++; 
                             }
                         } else {
                             this.$set(this.slideItems, existingItemIndex, newItem);
@@ -341,33 +340,27 @@ export default {
                             this.minPage++;
                             updatedSlideIndex = this.slideItems.length - 1 - this.items.length;
                   
-                  } else {
+                        } else {
                             this.slideItems.splice(-this.getItemsPerPage());
                             this.maxPage--;
                             updatedSlideIndex = this.getItemsPerPage();
                         }
                     }
-
-                    if (this.$refs.mySwiper != undefined && this.$refs.mySwiper.swiper != undefined)
-                        this.$refs.mySwiper.swiper.update();
-
-                    // When changes where made in the array, updates slider position                   
-                    this.$nextTick(() => {
-                        if (this.goingRight == undefined && updatedSlideIndex == 0) {
-                            this.slideIndex = -1; // Used to force reload of index when page has not loaded slideItems yet
-                        } else {
+                        
+                    if (this.goingRight == undefined && updatedSlideIndex == 0) {
+                        this.slideIndex = -1; // Used to force reload of index when page has not loaded slideItems yet
+                    } else {   
+                        if (this.$refs.mySwiper != undefined && this.$refs.mySwiper.swiper != undefined) {
+                            // if (updatedSlideIndex != undefined && this.$refs.mySwiper.swiper.slides[updatedSlideIndex] != undefined) 
+                                // this.$refs.mySwiper.swiper.slides[updatedSlideIndex].click();
+                            
+                            this.$refs.mySwiper.swiper.activeIndex = this.slideIndex;
                             this.slideIndex = updatedSlideIndex;
-                        }
+                                                
+                            // console.log("Após: " + this.slideIndex + " " + this.$refs.mySwiper.swiper.activeIndex);
+                        }  
+                    }
 
-                        if (this.slideIndex != undefined && this.$refs.mySwiper.swiper.slides[this.slideIndex] != undefined) 
-                            this.$refs.mySwiper.swiper.slides[this.slideIndex].click();
-                        
-                        this.$refs.mySwiper.swiper.activeIndex == this.slideIndex;
-                        this.$refs.mySwiper.swiper.slideTo(this.slideIndex, 0, false);
-                        
-                        this.$refs.mySwiper.swiper.update();
-                    
-                    });
                 }
             },
             immediate: true
@@ -389,8 +382,16 @@ export default {
                     this.loadCurrentItem();
                     
                     // Handles requesting new page of items, either to left or right
-                    this.$nextTick(() => {
-                        if (this.slideItems.length > 0) {
+                    if (this.$refs.mySwiper != undefined && this.$refs.mySwiper.swiper != undefined) {
+
+                        if (this.slideIndex != this.$refs.mySwiper.swiper.activeIndex) {
+                            if (this.slideIndex != undefined && this.$refs.mySwiper.swiper.slides[this.slideIndex] != undefined) 
+                                this.$refs.mySwiper.swiper.slides[this.slideIndex].click();
+
+                            this.readjustedSlideIndex = this.slideIndex;
+                            this.$refs.mySwiper.swiper.activeIndex = this.slideIndex + 0;
+
+                        } else if (this.slideItems.length > 0) {
                             if (this.$refs.mySwiper.swiper.activeIndex == this.slideItems.length - 1 && this.page < this.totalPages)
                                 oldVal == undefined ? this.$eventBusSearch.setPage(this.page + 1) : this.$eventBusSearch.setPage(this.maxPage + 1);
                             else if (this.$refs.mySwiper.swiper.activeIndex == 0 && this.page > 1 && this.slideItems.length < this.totalItems) {
@@ -401,7 +402,7 @@ export default {
                         // Handles pausing auto play when reaches the end of the list.
                         if (this.$refs.mySwiper.swiper.activeIndex == this.slideItems.length - 1 && this.page == this.totalPages)
                             this.isPlaying = false;
-                    });
+                    }
                 }
             },
             immediate: true
@@ -430,8 +431,12 @@ export default {
             'getPage',
             'getItemsPerPage'
         ]),
+        setMaxAndMinPages () {
+            this.minPage = JSON.parse(JSON.stringify(this.getPage() < this.minPage ? this.getPage() : this.minPage));
+            this.maxPage = JSON.parse(JSON.stringify(this.getPage() > this.maxPage ? this.getPage() : this.maxPage));
+        },
         onHideControls() {
-            if (!this.isSwiping)
+            if (this.isSwiping == undefined || this.isSwiping == false)
                 this.hideControls = !this.hideControls;
         },
         onSwipeFiltersMenu($event) {
@@ -446,8 +451,24 @@ export default {
             }, 500);
         },
         onSlideChange() {
+
             if (this.$refs.mySwiper.swiper != undefined)
                 this.slideIndex = this.$refs.mySwiper.swiper.activeIndex;
+
+            this.$nextTick(() => {
+                if (this.readjustedSlideIndex != undefined) {
+                    this.slideIndex = this.readjustedSlideIndex;
+                    // if (this.slideIndex != undefined && this.$refs.mySwiper.swiper.slides[this.slideIndex] != undefined) 
+                    //     this.$refs.mySwiper.swiper.slides[this.slideIndex].click();
+                    this.$refs.mySwiper.swiper.activeIndex = this.slideIndex + 0;
+                    this.readjustedSlideIndex = undefined;
+
+                    if (this.slideIndex != undefined && this.$refs.mySwiper.swiper.slides[this.slideIndex] != undefined) 
+                        this.$refs.mySwiper.swiper.slides[this.slideIndex].click();
+
+                }
+            });
+            
         },
         nextSlide() { 
             if (this.$refs.mySwiper.swiper != undefined)
@@ -551,16 +572,22 @@ export default {
             this.$refs.mySwiper.swiper.initialSlide = this.slideIndex;
         }
 
+        // Adds clipped class to root html
+        document.documentElement.scrollTo(0,0);
+        document.documentElement.classList.add('is-clipped');
     },
     beforeDestroy() {
         clearInterval(this.intervalId);
         if (this.$refs.mySwiper.swiper)
             this.$refs.mySwiper.swiper.destroy();
+
+        // Remove clipped class from root html
+        document.documentElement.classList.remove('is-clipped');
     }
 }
 </script>
 
-<style  lang="scss" scoped>
+<style  lang="scss">
     $turquoise1: #e6f6f8;
     $turquoise2: #d1e6e6;
     $turquoise5: #298596;
@@ -573,10 +600,16 @@ export default {
     $page-small-side-padding: 25px;
     $page-side-padding: 4.166666667%; 
 
-    @import "../../src/admin/scss/_view-mode-slide.scss";
+    @import "../../src/admin/scss/_view-mode-slideshow.scss";
 
-    .table-wrapper {
-        overflow-x: hidden !important;
+    .is-fullscreen .table-wrapper {
+        overflow: hidden !important;
+        display: flex;
+        flex-wrap: nowrap;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100vh;
+        width: 100vw;
     }
 
 </style>

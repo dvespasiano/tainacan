@@ -8,6 +8,18 @@ use \Tainacan\API\REST_Controller;
 
 class REST_Facets_Controller extends REST_Controller {
 
+	private $total_pages;
+	private $total_items;
+
+	private $collection;
+	private $collection_repository;
+	private $metadatum_repository;
+	private $filter_repository;
+	private $terms_repository;
+	private $taxonomy_repository;
+	private $items_repository;
+	private $taxonomy;
+
 	/**
 	 * REST_Facets_Controller constructor.
 	 */
@@ -38,7 +50,7 @@ class REST_Facets_Controller extends REST_Controller {
 		register_rest_route($this->namespace, '/collection/(?P<collection_id>[\d]+)/' . $this->rest_base . '/(?P<metadatum_id>[\d]+)', array(
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => array($this, 'get_item'),
+				'callback'            => array($this, 'get_items'),
 				'permission_callback' => array($this, 'get_items_permissions_check')
 			)
         ));
@@ -46,7 +58,7 @@ class REST_Facets_Controller extends REST_Controller {
         register_rest_route($this->namespace, '/' . $this->rest_base . '/(?P<metadatum_id>[\d]+)', array(
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => array($this, 'get_item'),
+				'callback'            => array($this, 'get_items'),
 				'permission_callback' => array($this, 'get_items_permissions_check')
 			)
 		));
@@ -57,7 +69,7 @@ class REST_Facets_Controller extends REST_Controller {
 	 *
 	 * @return \WP_Error|\WP_REST_Response
 	 */
-	public function get_item( $request ) {
+	public function get_items( $request ) {
 		
 		$metadatum_id = $request['metadatum_id'];
         $metadatum = $this->metadatum_repository->fetch($metadatum_id);
@@ -83,8 +95,7 @@ class REST_Facets_Controller extends REST_Controller {
 	 */
 	public function prepare_item_for_response($metadatum, $request){
 		$response = [];
-		$reference_id = 0;
-		$collection_id = ( isset($request['collection_id']) ) ? $request['collection_id'] : 0;
+		$metadatum_type = null;
 
         if( !empty($metadatum) ){
 
@@ -206,9 +217,8 @@ class REST_Facets_Controller extends REST_Controller {
 			else {
 
 				$metadatum_id = $metadatum->get_id();
-				$reference_id = $metadatum->get_id();
-				$offset = '';
-				$number = '';
+				$offset = null;
+				$number = null;
 				$collection_id = ( isset($request['collection_id']) ) ? $request['collection_id'] : false;
 				$selected = $this->getTextSelectedValues($request, $metadatum_id);
 
@@ -226,42 +236,40 @@ class REST_Facets_Controller extends REST_Controller {
 		
 				} else {
 					if($collection_id) {
-						$response = $this->metadatum_repository->fetch_all_metadatum_values( $collection_id, $metadatum_id, '', $offset, $number);
+						$response = $this->metadatum_repository->fetch_all_metadatum_values( $collection_id, $metadatum_id, null, $offset, $number);
 					} else {
-						$response = $this->metadatum_repository->fetch_all_metadatum_values( null, $metadatum_id, '', $offset, $number);
+						$response = $this->metadatum_repository->fetch_all_metadatum_values( null, $metadatum_id, null, $offset, $number);
 					}
 				}
 
+				$rawResponse = $response;
+
 				// retrieve selected items
 
-				if( $selected && $request['getSelected'] && $request['getSelected'] === '1'){
+				if( count($selected) && $request['getSelected'] && $request['getSelected'] === '1'){
 					$rawValues = $this->get_values( $response );
 					$realResponse = [];
 
 					foreach( $selected as $index => $value ){
-						
-						$row = ['mvalue' => $value, 'metadatum_id' => $metadatum_id ];
+						$row = (object) ['mvalue' => $value, 'metadatum_id' => $metadatum_id ];
 						$realResponse[] = $row;
-
 					}
 
 					foreach( $rawValues as $index => $row0 ){
 
-						if( in_array($row0, $selected) ){
-							continue;
-						}
+						if( !in_array($row0, $selected) ){
+							$realResponse[] = (object) ['mvalue' => $row0, 'metadatum_id' => $metadatum_id];
 
-						$realResponse[] = ['mvalue' => $row0, 'metadatum_id' => $metadatum_id];
-
-						if( isset($request['number']) && count($realResponse) >= $request['number']){
-							break;
+							if( isset($request['number']) && count($realResponse) >= $request['number']){
+								break;
+							}
 						}
 					}
 					
 					$response = $realResponse;
 				}
 
-				$this->set_pagination_properties_text_type( $collection_id, $metadatum_id, ($request['search']) ? $request['search'] : '' , $offset, $number );
+				$this->set_pagination_properties_text_type( $offset, $number, $rawResponse );
 			}
         }
 
@@ -290,13 +298,7 @@ class REST_Facets_Controller extends REST_Controller {
 			foreach ( $response as $key => $item ) {
 
 				if( $type === 'Tainacan\Metadata_Types\Taxonomy' ){
-					$total_items = $this->add_items_count( $item['id'], $reference_id, true, $query, $collection_id); 
-
-					if( $total_items === 0){
-						continue;
-					}
-				
-					$row = [
+					$result[] = [
 						'label' => $item['name'],
 						'value' => $item['id'],
 						'img' => ( isset($item['header_image']) ) ? $item['header_image'] : false ,
@@ -307,15 +309,8 @@ class REST_Facets_Controller extends REST_Controller {
 						'taxonomy' => ( isset($item['taxonomy']) ) ? $item['taxonomy'] : false,
 						'total_items' => $total_items
 					];
-
 				} else if( $type === 'Tainacan\Metadata_Types\Relationship' ){
-					$total_items = $this->add_items_count( $item['id'], $reference_id, false, $query, $collection_id);
-
-					if( $total_items === 0){
-						continue;
-					}
-
-					$row = [
+					$result[] = [
 						'label' => $item['title'],
 						'value' => $item['id'],
 						'img' => ( isset($item['thumbnail']['thumb']) ) ? $item['thumbnail']['thumb'] : false,
@@ -324,27 +319,17 @@ class REST_Facets_Controller extends REST_Controller {
 						'type' => 'Relationship',
 						'total_items' => $total_items
 					];
-
 				} else {
-					$total_items = $this->add_items_count( $item['mvalue'], $reference_id, false, $query, $collection_id);
-
-					if( $total_items === 0){
-						continue;
-					}
-
-					$row = [
-						'label' => $item['mvalue'],
-						'value' => $item['mvalue'],
+					$result[] = [
+						'label' => $item->mvalue,
+						'value' => $item->mvalue,
 						'img' => false,
 						'parent' => false,
 						'total_children' => 0,
 						'type' => 'Text',
 						'total_items' => $total_items
 					];
-
 				}
-
-				$result[] = $row;
 			}
 		}
 		
@@ -353,15 +338,17 @@ class REST_Facets_Controller extends REST_Controller {
 
 	/**
 	 * set attributes for text metadata
+	 *
+	 * @param $offset
+	 * @param $number
+	 * @param $response
 	 */
-	private function set_pagination_properties_text_type( $collection_id, $metadatum_id, $search , $offset, $number ){
-		$response = $this->metadatum_repository->fetch_all_metadatum_values( $collection_id, $metadatum_id, $search);
-
+	private function set_pagination_properties_text_type( $offset, $number, $response ){
 		if( $response && is_array( $response ) ){
 
 			if ( $offset !== '' && $number) {
 				$per_page = (int) $number;
-				$page = ceil( ( ( (int) $offset ) / $per_page ) + 1 );
+				//$page = ceil( ( ( (int) $offset ) / $per_page ) + 1 );
 			
 				$this->total_items  = count( $response );
 			
@@ -380,12 +367,15 @@ class REST_Facets_Controller extends REST_Controller {
 
 	/**
 	 * set attributes for term metadata
+	 *
+	 * @param $args
+	 * @param $response
 	 */
 	private function set_pagination_properties_term_type( $args, $response ){
 
 		if(isset($args['number'], $args['offset'])){
 			$number = $args['number'];
-			$offset = $args['offset'];
+			//$offset = $args['offset'];
 
 			unset( $args['number'], $args['offset'] );
 			$total_terms = wp_count_terms( $this->taxonomy->get_db_identifier(), $args );
@@ -395,7 +385,7 @@ class REST_Facets_Controller extends REST_Controller {
 			}
 
 			$per_page = (int) $number;
-			$page     = ceil( ( ( (int) $offset ) / $per_page ) + 1 );
+			//$page     = ceil( ( ( (int) $offset ) / $per_page ) + 1 );
 		
 			$this->total_items  = (int) $total_terms ;
 		
@@ -409,10 +399,12 @@ class REST_Facets_Controller extends REST_Controller {
 	}
 
 	/**
-	 * get text metadata selected facets 
-	 * 
+	 * get text metadata selected facets
+	 *
 	 * @param $request
-	 * @param $taxonomy_id 
+	 * @param $taxonomy_id
+	 *
+	 * @return array
 	 */
 	private function getTaxonomySelectedValues($request, $taxonomy_id){
 		$selected = [];
@@ -434,9 +426,11 @@ class REST_Facets_Controller extends REST_Controller {
 
 	/**
 	 * get text metadata selected facets
-	 * 
+	 *
 	 * @param $request
 	 * @param $metadatum_id
+	 *
+	 * @return array
 	 */
 	private function getTextSelectedValues($request, $metadatum_id){
 		if( isset($request['current_query']['metaquery']) ){
@@ -455,9 +449,11 @@ class REST_Facets_Controller extends REST_Controller {
 
 	/**
 	 * get only selected relationship values
-	 * 
+	 *
 	 * @param $request
 	 * @param $metadatum_id
+	 *
+	 * @return array
 	 */
 	private function getRelationshipSelectedValues($request, $metadatum_id){
 		$selected = [];
@@ -491,26 +487,29 @@ class REST_Facets_Controller extends REST_Controller {
 	}
 
 	/**
-	 * 
+	 * @param $rows
+	 *
+	 * @return array
 	 */
 	private function get_values( $rows ){
 		$values = [];
 
 		foreach( $rows as $row ){
-            $values[] = $row['mvalue'];
+            $values[] = $row->mvalue;
 		}
 
 		return $values;
 	}
-	
+
 	/**
-	 * method responsible to return the total of items for the facet value 
-	 * 
-	 * @param value string/int the facet value
-	 * @param reference_id int the taxonomy or the metadataid
-	 * @param is_taxonomy (default) false if the value param is a term 
-	 * @param query the actual request query to filter the items
-	 * 
+	 * method responsible to return the total of items for the facet value
+	 *
+	 * @param $value
+	 * @param $reference_id
+	 * @param bool $is_taxonomy
+	 * @param $query
+	 * @param $collection_id
+	 *
 	 * @return int total of items found
 	 */
 	private function add_items_count( $value, $reference_id, $is_taxonomy = false, $query, $collection_id){

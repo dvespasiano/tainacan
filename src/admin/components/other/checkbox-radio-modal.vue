@@ -1,8 +1,8 @@
 <template>
     <div class="tainacan-modal-content">
         <header class="tainacan-modal-title">
-            <h2 v-if="isFilter">{{ this.$i18n.get('filter') }} <em>{{ filter.name }}</em></h2>
-            <h2 v-else>{{ this.$i18n.get('metadatum') }} <em>{{ metadatum.name }}</em></h2>
+            <h2 v-if="isFilter">{{ $i18n.get('filter') }} <em>{{ filter.name }}</em></h2>
+            <h2 v-else>{{ $i18n.get('metadatum') }} <em>{{ metadatum.name }}</em></h2>
             <hr>
         </header>
         <div class="tainacan-form">
@@ -22,7 +22,6 @@
             <b-tabs
                     v-if="!isSearching"
                     size="is-small"
-                    expanded
                     animated
                     @input="fetchSelectedLabels()"
                     v-model="activeTab">
@@ -150,13 +149,14 @@
                                 grouped
                                 group-multiline>
                             <div
-                                    v-for="(term, index) in (selected instanceof Array ? selected : [this.selected])"
+                                    v-for="(term, index) in (selected instanceof Array ? selected : [selected])"
                                     :key="index"
                                     class="control">
                                 <b-tag
+                                        v-if="selected instanceof Array ? true : selected != ''"
                                         attached
                                         closable
-                                        @close="selected.splice(index, 1)">
+                                        @close="selected instanceof Array ? selected.splice(index, 1) : selected = ''">
                                     {{ isTaxonomy ? selectedTagsName[term] : term }}
                                 </b-tag>
                             </div>
@@ -362,13 +362,17 @@
             getOptions(offset){
                 let promise = '';
 
+                // Cancels previous Request
+                if (this.getOptionsValuesCancel != undefined)
+                    this.getOptionsValuesCancel.cancel('Facet search Canceled.');
+
                 if ( this.metadatum_type === 'Tainacan\\Metadata_Types\\Relationship' ) {
                     let collectionTarget = ( this.metadatum_object && this.metadatum_object.metadata_type_options.collection_id ) ?
                         this.metadatum_object.metadata_type_options.collection_id : this.collection_id;
 
                     promise = this.getValuesRelationship( collectionTarget, this.optionName, [], offset, this.maxNumOptionsCheckboxList, true);
 
-                    promise
+                    promise.request
                         .then(() => {
                             this.isCheckboxListLoading = false;
                             this.isSearchingLoading = false;
@@ -379,7 +383,7 @@
                 } else {
                     promise = this.getValuesPlainText( this.metadatum_id, this.optionName, this.isRepositoryLevel, [], offset, this.maxNumOptionsCheckboxList, true);
 
-                    promise
+                    promise.request
                         .then(() => {
                             this.isCheckboxListLoading = false;
                             this.isSearchingLoading = false;
@@ -388,6 +392,9 @@
                             this.$console.log(error);
                         })
                 }
+
+                // Search Request Token for cancelling
+                this.getOptionsValuesCancel = promise.source;
             },
             autoComplete: _.debounce( function () {
                 this.isSearching = !!this.optionName.length;
@@ -420,7 +427,7 @@
 
                     this.getOptions(0);
                 }
-            }, 300),
+            }, 500),
             highlightHierarchyPath(){
                 for(let [index, el] of this.hierarchicalPath.entries()){
                     let htmlEl = this.$refs[`${el.column}.${el.element}-tainacan-li-checkbox-model`][0].$el;
