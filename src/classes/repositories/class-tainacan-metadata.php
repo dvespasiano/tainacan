@@ -983,38 +983,74 @@ class Metadata extends Repository {
 
 		if ( $metadatum_type === 'Tainacan\Metadata_Types\Taxonomy' ) {
 			
-			if ($items_query) {
-				$base_query = $wpdb->prepare("FROM $wpdb->term_relationships tr 
-					INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-					INNER JOIN $wpdb->terms t ON tt.term_id = t.term_id 
-					WHERE 
-					tt.parent = %d AND
-					tr.object_id IN ($items_query) AND 
-					tt.taxonomy = %s
-					$search_q
-					ORDER BY t.name ASC
-					",
-					$args['parent_id'],
-					$taxonomy_slug
-				);
+			if (true) {
+				
+				if ($items_query) {
+					
+					$base_query = $wpdb->prepare("
+						WITH RECURSIVE terms_path AS (
+							SELECT t.name, tr.term_taxonomy_id, tt.parent FROM $wpdb->term_relationships tr 
+							INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+							INNER JOIN $wpdb->terms t ON tt.term_id = t.term_id 
+							WHERE 
+							tr.object_id IN ($items_query) AND 
+							tt.taxonomy = %s
+							UNION ALL
+							SELECT t2.name, tp.term_taxonomy_id, tt2.parent FROM $wpdb->term_taxonomy tt2
+							INNER JOIN terms_path tp ON tp.parent = tt2.term_id
+							INNER JOIN $wpdb->terms t2 ON tt2.term_id = t2.term_id 
+						)
+					", $taxonomy_slug);
+					
+				} else {
+					
+				}
+				
+				$query = $wpdb->prepare("$base_query SELECT DISTINCT name, term_taxonomy_id, parent FROM terms_path WHERE parent = %d $pagination", $args['parent_id']);
+				
+				$total_query = $wpdb->prepare("$base_query SELECT COUNT(DISTINCT term_taxonomy_id) FROM terms_path WHERE parent = %d $pagination", $args['parent_id']);
+				
+				$total_query = "SELECT COUNT(DISTINCT tt.term_taxonomy_id) $base_query";
+				
 			} else {
-				$base_query = $wpdb->prepare("FROM $wpdb->term_taxonomy tt 
-					INNER JOIN $wpdb->terms t ON tt.term_id = t.term_id 
-					WHERE 
-					tt.parent = %d AND
-					tt.taxonomy = %s
-					$search_q
-					ORDER BY t.name ASC
-					",
-					$args['parent_id'],
-					$taxonomy_slug
-				);
+				
+				if ($items_query) {
+					$base_query = $wpdb->prepare("FROM $wpdb->term_relationships tr 
+						INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+						INNER JOIN $wpdb->terms t ON tt.term_id = t.term_id 
+						WHERE 
+						tt.parent = %d AND
+						tr.object_id IN ($items_query) AND 
+						tt.taxonomy = %s
+						$search_q
+						ORDER BY t.name ASC
+						",
+						$args['parent_id'],
+						$taxonomy_slug
+					);
+				} else {
+					$base_query = $wpdb->prepare("FROM $wpdb->term_taxonomy tt 
+						INNER JOIN $wpdb->terms t ON tt.term_id = t.term_id 
+						WHERE 
+						tt.parent = %d AND
+						tt.taxonomy = %s
+						$search_q
+						ORDER BY t.name ASC
+						",
+						$args['parent_id'],
+						$taxonomy_slug
+					);
+				}
+				
+				$query = "SELECT DISTINCT t.name, tt.term_taxonomy_id, tt.parent $base_query $pagination";
+				
+				$total_query = "SELECT COUNT(DISTINCT tt.term_taxonomy_id) $base_query";
+				
 			}
 			
 			
-			$query = "SELECT DISTINCT t.name, tt.term_taxonomy_id, tt.parent $base_query $pagination";
 			
-			$total_query = "SELECT COUNT(DISTINCT tt.term_taxonomy_id) $base_query";
+			
 			
 			$results = $wpdb->get_results($query);
 			
