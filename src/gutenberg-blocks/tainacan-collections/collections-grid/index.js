@@ -18,7 +18,37 @@ registerBlockType('tainacan/collections-grid', {
             default: false
         },
         selectedCollections: {
-            type: Array,
+            type: 'array',
+            source: 'query',
+            selector: 'li>a',
+            query: {
+                id: {
+                    source: 'attribute',
+                    attribute: 'id'
+                },
+                name: {
+                    source: 'text',
+                    selector: '.collection-name'
+                },
+                url: {
+                    source: 'attribute',
+                    attribute: 'href'
+                },
+                img: {
+                    source: 'query',
+                    selector: 'img',
+                    query: {
+                        src: {
+                            source: 'attribute',
+                            attribute: 'src'
+                        },
+                        alt: {
+                            source: 'attribute',
+                            attribute: 'alt'
+                        },
+                    }
+                }
+            },
             default: []
         },
         collections: {
@@ -41,15 +71,14 @@ registerBlockType('tainacan/collections-grid', {
 
         let { selectedCollections, collections, isModalOpen, content } = attributes;
 
-        function prepareCollectionForModal(collection) {
+        function prepareCollectionForModal(collection, index) {
             return (
-                <li>
+                <li key={ index }>
                     <Button 
-                            id={ `collection-modal-${collection.id}` }
-                            className={ selectedCollections.indexOf(collection.id) != -1 ? 'is-selected' : ''}
+                            className={ selectedCollections.findIndex((aCollection) => aCollection.id == `collection-${collection.id}`) >= 0 ? 'is-selected' : ''}
                             isToggled
-                            onClick={ () => selectCollection(collection.id) }>
-                        <div class="collection-name">
+                            onClick={ () => selectCollection(collection) }>
+                        <div className="collection-name">
                             { collection.name ? collection.name : __("Name not informed", 'tainacan')}
                         </div>
                         <img
@@ -66,24 +95,20 @@ registerBlockType('tainacan/collections-grid', {
         }
 
         function prepareCollectionForEditor(collection, index) {
-            return selectedCollections.indexOf(collection.id) != -1 ? (
-                <li>
+            return (
+                <li >
                     <a 
+                            key={ index }
                             href={ collection.url }
                             targe="_blank"
-                            id={ `collection-editor-${collection.id}` }>
-                        <div class="collection-name">
+                            id={ collection.id }>
+                        <div className="collection-name">
                             { collection.name ? collection.name : __("Name not informed", 'tainacan')}
                         </div>
                         <img
-                            src={
-                                (collection.thumbnail && collection.thumbnail.thumbnail) ?
-                                    collection.thumbnail.thumbnail[0] :
-                                    ( (collection.img && collection.img[0].src) ?
-                                        collection.img[0].src : `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
-                            }
-                            alt={ collection.alt ? collection.alt : collection.name } />
-                        <div class="collection-control-area">
+                            src={ collection.img.src }
+                            alt={ collection.img.alt } />
+                        <div className="collection-control-area">
                             <IconButton 
                                     onClick={ ($event) => removeCollection($event, index) }
                                     icon="trash"
@@ -91,7 +116,7 @@ registerBlockType('tainacan/collections-grid', {
                         </div>
                     </a>
                 </li>
-            ) : null;
+            )
         }
 
         function fetchCollections() {
@@ -105,12 +130,22 @@ registerBlockType('tainacan/collections-grid', {
                });
         }
 
-        function selectCollection(collectionId) {
-            let existingIndex = selectedCollections.findIndex((collection) => collection == collectionId);
+        function selectCollection(collection) {
+            let existingIndex = selectedCollections.findIndex((aCollection) => aCollection.id == collection.id);
             if (existingIndex >= 0) {
                 selectedCollections.splice(existingIndex, 1);
             } else {
-                selectedCollections.push(collectionId);
+                selectedCollections.push({
+                    name: collection.name,
+                    id:  `collection-${collection.id}`,
+                    url: collection.url,
+                    img: {
+                        src: (collection.thumbnail && collection.thumbnail.thumbnail) ? collection.thumbnail.thumbnail[0] :
+                                ((collection.img && collection.img[0].src) ? collection.img[0].src 
+                                    : `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`),
+                        alt: collection.name
+                    }
+                });
             }
             setAttributes({ selectedCollections: selectedCollections });
             updateContent()
@@ -126,21 +161,18 @@ registerBlockType('tainacan/collections-grid', {
         }
 
         function updateContent() {
-            setAttributes({
-                content: selectedCollections.length > 0 ? (
-                    <div className={ className }>
-                        <ul className="collections-grid">
-                            {   
-                                collections.map((collection, index) => prepareCollectionForEditor(collection, index))
-                            }    
-                        </ul>
-                    </div>
-                ) : null
-            });
+            content = selectedCollections.length > 0 ? (
+                <ul 
+                        className="collections-grid">
+                    { selectedCollections.map((collection, index) => prepareCollectionForEditor(collection, index)) }    
+                </ul>
+            ) : null;
+
+            setAttributes({ content: content });
         }
         return (
             <div className={ className }>
-                { isSelected ? 
+                { isSelected || selectedCollections.length <= 0? 
                     <div style={{
                         marginBottom: '20px',
                         display: 'flex',
@@ -174,7 +206,7 @@ registerBlockType('tainacan/collections-grid', {
                             setAttributes({ isModalOpen: false });
                         }}>
                         <ul className="collections-grid">
-                            { collections.map((collection) => prepareCollectionForModal(collection)) }    
+                            { collections.map((collection, index) => prepareCollectionForModal(collection, index)) }    
                         </ul>
                         <div>
                             <Button isDefault onClick={ () => {
@@ -197,7 +229,7 @@ registerBlockType('tainacan/collections-grid', {
         console.log('Save attributes', attributes);
 
         const { content } = attributes;
-
-        return <div>{content}</div>
+        
+        return <div>{ content }</div>
     },
 });
