@@ -1,3 +1,78 @@
+.wp-block-tainacan-collections-grid ul.collections-grid {
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  list-style: none; }
+  .wp-block-tainacan-collections-grid ul.collections-grid li {
+    margin: 1rem;
+    flex-direction: column;
+    position: relative; }
+    .wp-block-tainacan-collections-grid ul.collections-grid li .collection-name {
+      width: 148px;
+      padding: 0.5rem 0.75rem;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      text-align: left;
+      font-size: 0.75rem;
+      font-family: Roboto, sans;
+      color: black;
+      text-decoration: none !important; }
+    .wp-block-tainacan-collections-grid ul.collections-grid li img {
+      width: 148px;
+      height: 148px;
+      padding: 0; }
+    .wp-block-tainacan-collections-grid ul.collections-grid li .collection-control-area {
+      position: relative;
+      margin-top: -44px;
+      background: #dbdbdb;
+      display: none;
+      visibility: hidden;
+      opacity: 0;
+      justify-content: flex-end; }
+      .wp-block-tainacan-collections-grid ul.collections-grid li .collection-control-area .components-icon-button,
+      .wp-block-tainacan-collections-grid ul.collections-grid li .collection-control-area .components-icon-button:focus,
+      .wp-block-tainacan-collections-grid ul.collections-grid li .collection-control-area .components-icon-button:focus {
+        background: transparent !important;
+        color: #298596 !important;
+        box-shadow: none !important;
+        border: none !important; }
+    .wp-block-tainacan-collections-grid ul.collections-grid li:hover .collection-name {
+      background: #dbdbdb;
+      text-decoration: none !important; }
+    .wp-block-tainacan-collections-grid ul.collections-grid li:hover .collection-control-area {
+      visibility: visible;
+      display: flex;
+      opacity: 1; }
 
+.wp-block-tainacan-collections-grid__modal ul.collections-grid {
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  flex-wrap: wrap; }
+  .wp-block-tainacan-collections-grid__modal ul.collections-grid li {
+    margin: 1rem; }
+    .wp-block-tainacan-collections-grid__modal ul.collections-grid li button.components-button {
+      flex-direction: column; }
+      .wp-block-tainacan-collections-grid__modal ul.collections-grid li button.components-button .collection-name {
+        width: 120px;
+        padding: 0.5rem 0.75rem;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        text-align: left;
+        color: black;
+        text-decoration: none; }
+      .wp-block-tainacan-collections-grid__modal ul.collections-grid li button.components-button img {
+        width: 120px;
+        height: 120px; }
+      .wp-block-tainacan-collections-grid__modal ul.collections-grid li button.components-button:hover .collection-name {
+        background: #dbdbdb;
+        text-decoration: none; }
+      .wp-block-tainacan-collections-grid__modal ul.collections-grid li button.components-button.is-selected .collection-name {
+        background: #d9eced; }
+      .wp-block-tainacan-collections-grid__modal ul.collections-grid li button.components-button:focus:enabled {
+        box-shadow: none; }
 
 /*# sourceMappingURL=tainacan-gutenberg-blocks-style.css.map */

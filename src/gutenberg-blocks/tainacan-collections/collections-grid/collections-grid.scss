@@ -1,2 +1,115 @@
 .wp-block-tainacan-collections-grid {
+
+
+    ul.collections-grid {
+        display: flex;
+        flex-flow: row;
+        justify-content: center;
+        flex-wrap: wrap;
+        list-style: none;
+
+        li {
+            margin: 1rem;
+            flex-direction: column;
+            position: relative;
+
+            .collection-name {
+                width: 148px;
+                padding: 0.5rem 0.75rem;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                text-align: left;
+                font-size: 0.75rem;
+                font-family: Roboto, sans;
+                color: black;
+                text-decoration: none !important;
+            }
+            img {
+                width: 148px;
+                height: 148px;
+                padding: 0;
+            }
+
+            .collection-control-area {
+                position: relative;
+                margin-top: -44px;
+                background: #dbdbdb;
+                display: none;
+                visibility: hidden;
+                opacity: 0;
+                justify-content: flex-end;
+
+                .components-icon-button,
+                .components-icon-button:focus,
+                .components-icon-button:focus
+                 {
+                    background: transparent !important;
+                    color: #298596 !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                }
+            }
+
+            &:hover {
+                .collection-name {
+                    background: #dbdbdb;
+                    text-decoration: none !important;
+                }
+                .collection-control-area {
+                    visibility: visible;
+                    display: flex;
+                    opacity: 1;
+                }
+            }
+        }
+    }
+}
+
+.wp-block-tainacan-collections-grid__modal {
+
+    ul.collections-grid {
+        display: flex;
+        flex-flow: row;
+        justify-content: center;
+        flex-wrap: wrap;
+
+        li {
+            margin: 1rem;
+
+            button.components-button {
+                flex-direction: column;
+
+                .collection-name {
+                    width: 120px;
+                    padding: 0.5rem 0.75rem;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-align: left;
+                    color: black;
+                    text-decoration: none;
+                }
+                img {
+                    width: 120px;
+                    height: 120px;
+                }
+
+                &:hover {
+                    .collection-name {
+                        background: #dbdbdb;
+                        text-decoration: none;
+                    }
+                }
+                &.is-selected {
+                    .collection-name {
+                        background: #d9eced;
+                    }
+                }
+                &:focus:enabled {
+                    box-shadow: none;
+                }
+            }
+        }
+    }
 }
