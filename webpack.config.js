@@ -9,6 +9,7 @@ module.exports = {
         user_admin: './src/admin/js/main.js',
         //gutenberg_collections_carousel: './src/gutenberg-blocks/tainacan-collections/collections-carousel/index.js',
         gutenberg_items_grid: './src/gutenberg-blocks/tainacan-items/items-grid/index.js',
+        gutenberg_items_grid_dynamic: './src/gutenberg-blocks/tainacan-items/items-grid/dynamic.js'
     },
     output: {
         path: path.resolve(__dirname, './src/assets/'),

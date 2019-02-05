@@ -346,9 +346,7 @@ registerBlockType('tainacan/items-grid', {
             </div>
         );
     },
-    save({ attributes }){
-        const { content } = attributes;
-
-        return <div>{ content }</div>
+    save(){
+        return null
     }
 });

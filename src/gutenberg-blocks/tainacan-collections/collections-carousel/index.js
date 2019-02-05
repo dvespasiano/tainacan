@@ -106,14 +106,14 @@ registerBlockType('tainacan/collections-carousel', {
                     href={item.url}
                     className={`${item.collection_id.split('{}')[0]}{}${collectionName}`}
                     style={style}>
-                    <img
+                    {/* <img
                         src={
                             (item.thumbnail && item.thumbnail.thumbnail) ?
                                 item.thumbnail.thumbnail[0] :
                                 ( (item.img && item.img[0].src) ?
                                     item.img[0].src : `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
                         }
-                        alt={ item.title ? item.title : item.alt } />
+                        alt={ item.title ? item.title : item.alt } /> */}
                 </a>
             );
         }
