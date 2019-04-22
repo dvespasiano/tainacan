@@ -2,6 +2,9 @@
     <div class="home-page page-container">
         <b-loading :active.sync="isLoadingCollections"/>
         <section class="home-section home-section-repository">
+            <tainacan-tour
+                    name="homeTour"
+                    :steps="homeTourSteps" />
             <div 
                     class="section-connector" 
                     aria-hidden/>
@@ -44,7 +47,7 @@
                             <span class="menu-text">{{ $i18n.get('label_all_items') }}</span>
                         </router-link>
                     </li> -->
-                    <li>
+                    <li data-v-step="1">
                         <router-link
                                 tag="a"
                                 to="/metadata">
@@ -54,7 +57,7 @@
                             <span class="menu-text">{{ $i18n.get('title_repository_metadata_page' ) }}</span>
                         </router-link>
                     </li>
-                    <li>
+                    <li data-v-step="2">
                         <router-link
                                 tag="a"
                                 to="/filters">
@@ -64,7 +67,7 @@
                             <span class="menu-text">{{ $i18n.get('title_repository_filters_page') }}</span>
                         </router-link>
                     </li>
-                    <li>
+                    <li data-v-step="3">
                         <router-link
                                 tag="a"
                                 to="/taxonomies">
@@ -74,7 +77,7 @@
                             <span class="menu-text">{{ $i18n.getFrom('taxonomies', 'name') }}</span>
                         </router-link>
                     </li>
-                    <li>
+                    <li data-v-step="4">
                         <router-link
                                 tag="a"
                                 to="/activities">
@@ -84,7 +87,7 @@
                             <span class="menu-text">{{ $i18n.get('title_repository_activities_page') }}</span>
                         </router-link>
                     </li>
-                    <li>
+                    <li data-v-step="5">
                         <router-link
                                 tag="a"
                                 to="/importers">
@@ -94,7 +97,7 @@
                             <span class="menu-text menu-text-import">{{ $i18n.get('importers') }}</span>
                         </router-link>
                     </li>
-                    <li>
+                    <li data-v-step="6">
                         <router-link
                                 tag="a"
                                 to="/exporters">
@@ -139,6 +142,7 @@
 <script>
 import CollectionsHomeList from '../components/lists/collections-home-list.vue';
 import { mapActions, mapGetters } from 'vuex';
+import TainacanTour from '../components/other/tainacan-tour.vue';
 
 export default {
     name: 'HomePage',
@@ -147,10 +151,61 @@ export default {
             isLoadingCollections: false,
             repositoryName: tainacan_plugin.repository_name,
             themeCollectionListURL: tainacan_plugin.theme_collection_list_url,
+            homeTourSteps: [
+                {
+                    target: '[data-v-step="1"]',
+                    content: {
+                        icon: 'metadata',
+                        title: this.$i18n.get('title_repository_metadata_page' ),
+                        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua.'
+                    },
+                },
+                {   
+                    target: '[data-v-step="2"]',
+                    content: {
+                        icon: 'filters',
+                        title: this.$i18n.get('title_repository_filters_page'),
+                        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                    },
+                },
+                {   
+                    target: '[data-v-step="3"]',
+                    content: {
+                        icon: 'taxonomies',
+                        title: this.$i18n.getFrom('taxonomies', 'name'),
+                        description: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                    },
+                },
+                {
+                    target: '[data-v-step="4"]',
+                    content: {
+                        icon: 'activities',
+                        title: this.$i18n.get('title_repository_activities_page'),
+                        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                    },
+                },
+                {   
+                    target: '[data-v-step="5"]',
+                    content: {
+                        icon: 'importers',
+                        title: this.$i18n.get('importers'),
+                        description: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                    },
+                },
+                {   
+                    target: '[data-v-step="6"]',
+                    content: {
+                        icon: 'exporters',
+                        title: this.$i18n.get('exporters'),
+                        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                    }
+                }
+            ]
         }
     },
     components: {
-        CollectionsHomeList
+        CollectionsHomeList,
+        TainacanTour
     },
     computed: {
         collections() {
@@ -179,6 +234,7 @@ export default {
     },
     mounted(){
         this.loadCollections();
+        this.$tours.homeTour.start();
     }
 }
 </script>

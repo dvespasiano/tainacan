@@ -9,6 +9,7 @@ import VTooltip from 'v-tooltip';
 import VueMasonry from 'vue-masonry-css';
 import draggable from 'vuedraggable';
 import VueTheMask from 'vue-the-mask';
+import VueTour from 'vue-tour';
 
 // Custom elements
 import Text from '../../classes/metadata-types/text/Text.vue';
@@ -55,6 +56,7 @@ Vue.use(RouterHelperPlugin);
 Vue.use(UserCapabilitiesPlugin);
 Vue.use(ConsolePlugin, {visual: false});
 Vue.use(VueTheMask);
+Vue.use(VueTour);
 
 /* Metadata */
 Vue.component('tainacan-text', Text);
