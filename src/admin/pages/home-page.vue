@@ -4,7 +4,8 @@
         <section class="home-section home-section-repository">
             <tainacan-tour
                     name="homeTour"
-                    :steps="homeTourSteps" />
+                    :steps="homeTourSteps"
+                    position="bottom"/>
             <div 
                     class="section-connector" 
                     aria-hidden/>
@@ -166,7 +167,7 @@ export default {
                         icon: 'filters',
                         title: this.$i18n.get('title_repository_filters_page'),
                         description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-                    },
+                    }
                 },
                 {   
                     target: '[data-v-step="3"]',

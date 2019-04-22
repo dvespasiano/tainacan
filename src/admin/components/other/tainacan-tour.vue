@@ -60,6 +60,7 @@
                             </span>
                         </button>
                     </div>
+                    <div class="step-arrow"/>
                 </v-step>
             </transition>
         </template>
@@ -76,7 +77,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" >
     
     @import '../../scss/_variables.scss';
 
@@ -179,15 +180,57 @@
                 position: absolute;
                 width: 0;
             }
+            &[x-placement^="bottom"] {
+                margin-top: 0.5rem;
+            }
             &[x-placement^="bottom"] .v-step__arrow {
+                border-width: 0 .5rem .5rem;
                 border-left-color: transparent;
                 border-right-color: transparent;
                 border-top-color: transparent;
-                border-width: 0 .5rem .5rem;
                 left: calc(50% - 1rem);
                 margin-bottom: 0;
                 margin-top: 0;
                 top: -0.5rem;
+            }
+            &[x-placement^="top"] {
+                margin-bottom: 0.5rem;
+            }
+            &[x-placement^="top"] .v-step__arrow {
+                border-width: 0.5rem 0.5rem 0 0.5rem;
+                border-left-color: transparent;
+                border-right-color: transparent;
+                border-bottom-color: transparent;
+                left: calc(50% - 1rem);
+                margin-bottom: 0;
+                margin-top: 0;
+                bottom: -0.5rem;
+            }
+            &[x-placement^="right"] {
+                margin-left: 0.5rem;
+            }
+            &[x-placement^="right"] .v-step__arrow {
+                border-width: 0.5rem 0.5rem 0.5rem 0;
+                border-left-color: transparent;
+                border-top-color: transparent;
+                border-bottom-color: transparent;
+                left: -0.5rem;
+                top: calc(50% - 1rem);
+                margin-left: 0;
+                margin-right: 0;
+            }
+            &[x-placement^="left"] {
+                margin-right: 0.5rem;
+            }
+            &[x-placement^="left"] .v-step__arrow {
+                border-width: 0.5rem 0 0.5rem 0.5rem;
+                border-top-color: transparent;
+                border-right-color: transparent;
+                border-bottom-color: transparent;
+                right: -0.5rem;
+                top: calc(50% - 1rem);
+                margin-left: 0;
+                margin-right: 0;
             }
         }
     }
