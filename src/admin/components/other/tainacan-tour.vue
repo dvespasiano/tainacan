@@ -37,6 +37,7 @@
                             class="step-footer"
                             slot="actions">
                         <button 
+                                v-if="tour.currentStep > 0"
                                 @click="tour.previousStep"
                                 class="button sequence-button">
                             <span class="icon is-large">
@@ -52,11 +53,21 @@
                                 :class="{ 'active': stepDot == tour.currentStep + 1}"/>
                         </div>
                         <button 
+                                v-if="tour.currentStep < tour.steps.length - 1"
                                 @click="tour.nextStep"
                                 class="button sequence-button">
                             <span>{{ $i18n.get('next') }}</span>
                             <span class="icon is-large">
                                 <i class="tainacan-icon tainacan-icon-20px tainacan-icon-next"/>
+                            </span>
+                        </button>
+                        <button 
+                                v-if="tour.currentStep == tour.steps.length - 1"
+                                @click="tour.stop"
+                                class="button sequence-button">
+                            <span>{{ $i18n.get('finish') }}</span>
+                            <span class="icon is-large">
+                                <i class="tainacan-icon tainacan-icon-20px tainacan-icon-approved"/>
                             </span>
                         </button>
                     </div>

@@ -404,6 +404,7 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'label_previous_group_slides'					 => __( 'Previous group of slides', 'tainacan' ),	
 	'label_plugin_home_page'					 	 => __( 'Plugin home page', 'tainacan' ),	
 	'label_wordpress_admin_page'					 => __( 'WordPress Admin Page', 'tainacan' ),	
+	'label_interface_tour'							 => __( 'Interface tour', 'tainacan' ),	
 
 	// Instructions. More complex sentences to guide user and placeholders
 	'instruction_delete_selected_collections'        => __( 'Delete selected collections', 'tainacan' ),

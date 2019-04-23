@@ -140,7 +140,8 @@ UserPrefsPlugin.install = function (Vue, options = {}) {
             'taxonomies_order': 'desc',
             'taxonomies_order_by': 'name',
             'collections_order': 'desc',
-            'collections_order_by': 'date'
+            'collections_order_by': 'date',
+            'hasShownHomeTour': false
         },
         init() {
             if (tainacan_plugin.user_prefs == undefined || tainacan_plugin.user_prefs == '') {

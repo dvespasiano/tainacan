@@ -106,6 +106,20 @@
             <processes-popup
                     v-if="showProcesses"
                     @closeProcessesPopup="showProcesses = false"/>
+            <button
+                    @click="showInterfaceTour()"
+                    class="button is-small is-white level-item">
+                <span
+                        v-tooltip="{
+                            content: $i18n.get('label_interface_tour'),
+                            autoHide: true,
+                            placement: 'auto',
+                            classes: ['repository-header-tooltips']
+                        }"
+                        class="icon">
+                    <i class="tainacan-icon tainacan-icon-20px tainacan-icon-tour"/>
+                </span>
+            </button>
             <a
                     class="level-item"
                     :href="wordpressAdmin">
@@ -168,6 +182,10 @@
 
                 this.$eventBusSearch.setSearchQuery(this.futureSearchQuery);
             },
+            showInterfaceTour() {
+                if (this.$tours.homeTour)
+                    this.$tours.homeTour.start();
+            }
         },
         created(){
             this.$root.$on('closeAdvancedSearchShortcut', () => {

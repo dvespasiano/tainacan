@@ -235,7 +235,12 @@ export default {
     },
     mounted(){
         this.loadCollections();
-        this.$tours.homeTour.start();
+        
+        // Shows tour dialogs
+        //if (this.$userPrefs.get('hasShownHomeTour') != true) {
+            this.$tours.homeTour.start();
+            this.$userPrefs.set('hasShownHomeTour', true);
+        //}
     }
 }
 </script>
