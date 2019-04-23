@@ -215,6 +215,18 @@ $modal-z: 9999999;
     }
 }
 
+.appear-enter-active {
+    animation-name: appear;
+    animation-duration: 0.8s;
+    animation-timing-function: ease;
+}
+
+.appear-leave-active {
+    animation-name: disappear;
+    animation-duration: 0.2s;
+    animation-timing-function: ease;
+}
+
 .slide-menu-enter-active {
     animation-name: slide-menu-in;
     animation-duration: 0.3s;

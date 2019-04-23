@@ -3,6 +3,7 @@
             :name="name"
             :steps="steps">
         <template slot-scope="tour">
+        
             <transition name="fade">
                 <v-step
                         v-if="tour.currentStep === index"
@@ -20,7 +21,7 @@
                             slot="content">
                         <button
                                 @click="tour.stop"
-                                class="icon close-button">
+                                class="icon close-button has-text-blue5">
                             <i class="tainacan-icon tainacan-icon-close tainacan-icon-18px" />
                         </button>
                         <div
@@ -113,7 +114,6 @@
                 .close-button {
                     border: none;
                     border-radius: 2rem;
-                    color: $blue5;
                     position: absolute;
                     right: 0;
                     top: 0;

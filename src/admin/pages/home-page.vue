@@ -1,6 +1,10 @@
 <template>
     <div class="home-page page-container">
-        <tainacan-welcome />
+        <transition name="appear">
+            <tainacan-welcome
+                    v-if="showWelcome"
+                    @onCloseWelcome="onCloseWelcome"/>
+        </transition>
         <b-loading :active.sync="isLoadingCollections"/>
         <section class="home-section home-section-repository">
             <tainacan-tour
@@ -203,7 +207,8 @@ export default {
                         description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
                     }
                 }
-            ]
+            ],
+            showWelcome: false,
         }
     },
     components: {
@@ -234,15 +239,22 @@ export default {
             .catch(() => {
                 this.isLoadingCollections = false;
             });
+        },
+        onCloseWelcome(shouldPerformTour) {
+
+            this.showWelcome = false;
+
+            if (shouldPerformTour)
+                this.$tours.homeTour.start();
+
         }
     },
     mounted(){
         this.loadCollections();
         
-        // Shows tour dialogs
-        //if (this.$userPrefs.get('hasShownHomeTour') != true) {
-            this.$tours.homeTour.start();
-            this.$userPrefs.set('hasShownHomeTour', true);
+        // if (this.$userPrefs.get('hasShownHomeWelcome') != true) {
+            this.showWelcome = true;
+            this.$userPrefs.set('hasShownHomeWelcome', true);
         //}
     }
 }

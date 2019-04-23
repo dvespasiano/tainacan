@@ -141,7 +141,7 @@ UserPrefsPlugin.install = function (Vue, options = {}) {
             'taxonomies_order_by': 'name',
             'collections_order': 'desc',
             'collections_order_by': 'date',
-            'hasShownHomeTour': false
+            'hasShownHomeWelcome': false
         },
         init() {
             if (tainacan_plugin.user_prefs == undefined || tainacan_plugin.user_prefs == '') {
