@@ -1,5 +1,6 @@
 <template>
     <div class="home-page page-container">
+        <tainacan-welcome />
         <b-loading :active.sync="isLoadingCollections"/>
         <section class="home-section home-section-repository">
             <tainacan-tour
@@ -143,6 +144,7 @@
 <script>
 import CollectionsHomeList from '../components/lists/collections-home-list.vue';
 import { mapActions, mapGetters } from 'vuex';
+import TainacanWelcome from '../components/other/tainacan-welcome.vue';
 import TainacanTour from '../components/other/tainacan-tour.vue';
 
 export default {
@@ -196,7 +198,7 @@ export default {
                 {   
                     target: '[data-v-step="6"]',
                     content: {
-                        icon: 'exporters',
+                        icon: 'export',
                         title: this.$i18n.get('exporters'),
                         description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
                     }
@@ -206,7 +208,8 @@ export default {
     },
     components: {
         CollectionsHomeList,
-        TainacanTour
+        TainacanTour,
+        TainacanWelcome
     },
     computed: {
         collections() {
