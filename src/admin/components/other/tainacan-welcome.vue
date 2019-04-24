@@ -73,6 +73,10 @@
         overflow: hidden;
         background-color: #01295c;
 
+        @media screen and (max-width: 768px) {
+            overflow: auto;
+        }
+
         .close-button {
             border: none;
             border-radius: 2rem;
@@ -80,7 +84,8 @@
             right: 0;
             top: 0;
             padding: 1.125rem 1.5rem;
-            cursor: pointer
+            cursor: pointer;
+            z-index: 99;
         }
 
         .columns {

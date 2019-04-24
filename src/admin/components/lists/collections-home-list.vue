@@ -279,7 +279,7 @@ export default {
         @media screen and (max-width: 768px) {
             flex-wrap: wrap;
         }
-
+    
         li {
             padding: 0.75rem;
             display: flex;

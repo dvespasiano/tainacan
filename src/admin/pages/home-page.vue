@@ -232,7 +232,7 @@ export default {
         loadCollections() {
             this.cleanCollections();    
             this.isLoadingCollections = true;
-            this.fetchCollections({ page: 1, collectionsPerPage: 5, status: undefined, contextEdit: true })
+            this.fetchCollections({ page: 1, collectionsPerPage: 9, status: undefined, contextEdit: true })
             .then(() => {
                 this.isLoadingCollections = false;
             }) 
@@ -246,16 +246,15 @@ export default {
 
             if (shouldPerformTour && this.$tours[this.$i18n.get('label_plugin_home_page')])
                 this.$tours[this.$i18n.get('label_plugin_home_page')].start();
-
         }
     },
     mounted(){
         this.loadCollections();
         
-        // if (this.$userPrefs.get('hasShownHomeWelcome') != true) {
+        if (this.$userPrefs.get('hasShownHomeWelcome') != true) {
             this.showWelcome = true;
             this.$userPrefs.set('hasShownHomeWelcome', true);
-        //}
+        }
     },
     beforeDestroy() {
         // Removes home tour from the list of available tours.
@@ -336,7 +335,6 @@ export default {
                 a {
                     margin-right: 2rem;
                     display: inline-flex;
-                    overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
 
