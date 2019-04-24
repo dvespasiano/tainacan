@@ -90,47 +90,48 @@
 
             </div>
             <button
+                    :disabled="!hasToursAvailable"
+                    @click="showTours = !showTours"
+                    class="button is-small is-white level-item"
+                    v-tooltip="{
+                        content: hasToursAvailable ? $i18n.get('label_interface_tours') : $i18n.get('label_no_interface_tours_available'),
+                        autoHide: true,
+                        placement: 'auto',
+                        classes: ['repository-header-tooltips']
+                    }">
+                <span class="icon">
+                    <i class="tainacan-icon tainacan-icon-20px tainacan-icon-tour"/>
+                </span>
+            </button>
+            <tours-popup
+                    v-if="showTours"
+                    @closeToursPopup="showTours = false"/>
+            <button
                     @click="showProcesses = !showProcesses"
-                    class="button is-small is-white level-item">
-                <span
-                        v-tooltip="{
-                            content: $i18n.get('processes'),
-                            autoHide: true,
-                            placement: 'auto',
-                            classes: ['repository-header-tooltips']
-                        }"
-                        class="icon">
+                    class="button is-small is-white level-item"
+                    v-tooltip="{
+                        content: $i18n.get('processes'),
+                        autoHide: true,
+                        placement: 'auto',
+                        classes: ['repository-header-tooltips']
+                    }">
+                <span class="icon">
                     <i class="tainacan-icon tainacan-icon-20px tainacan-icon-processes"/>
                 </span>
             </button>
             <processes-popup
                     v-if="showProcesses"
                     @closeProcessesPopup="showProcesses = false"/>
-            <button
-                    @click="showInterfaceTour()"
-                    class="button is-small is-white level-item">
-                <span
-                        v-tooltip="{
-                            content: $i18n.get('label_interface_tour'),
-                            autoHide: true,
-                            placement: 'auto',
-                            classes: ['repository-header-tooltips']
-                        }"
-                        class="icon">
-                    <i class="tainacan-icon tainacan-icon-20px tainacan-icon-tour"/>
-                </span>
-            </button>
             <a
                     class="level-item"
-                    :href="wordpressAdmin">
-                <span
-                        v-tooltip="{
-                            content: $i18n.get('label_wordpress_admin_page'),
-                            autoHide: true,
-                            placement: 'auto',
-                            classes: ['repository-header-tooltips']
-                        }"
-                        class="icon">
+                    :href="wordpressAdmin"
+                    v-tooltip="{
+                        content: $i18n.get('label_wordpress_admin_page'),
+                        autoHide: true,
+                        placement: 'auto',
+                        classes: ['repository-header-tooltips']
+                    }">
+                <span class="icon">
                     <i class="tainacan-icon tainacan-icon-wordpress"/>
                 </span>
             </a>
@@ -141,6 +142,7 @@
 <script>
     import AdvancedSearch from '../advanced-search/advanced-search.vue';
     import ProcessesPopup from '../other/processes-popup.vue';
+    import ToursPopup from '../other/tours-popup.vue';
 
     export default {
         name: 'TainacanHeader',
@@ -151,12 +153,20 @@
                 searchQuery: '',
                 futureSearchQuery: '',
                 showProcesses: false,
-                hasNewProcess: false
+                showTours: false,
+                hasNewProcess: false,
+                hasToursAvailable: false
             }
         },
         components: {
             AdvancedSearch,
-            ProcessesPopup
+            ProcessesPopup,
+            ToursPopup
+        },
+        watch: {
+            '$route'() {
+                this.hasToursAvailable = Object.keys(this.$tours).length;
+            }
         },
         methods: {
             // toItemsPage() {
@@ -182,15 +192,14 @@
 
                 this.$eventBusSearch.setSearchQuery(this.futureSearchQuery);
             },
-            showInterfaceTour() {
-                if (this.$tours.homeTour)
-                    this.$tours.homeTour.start();
-            }
         },
         created(){
             this.$root.$on('closeAdvancedSearchShortcut', () => {
                 this.$refs.advancedSearchShortcut.toggle();
             });
+        },
+        mounted() {
+            this.$nextTick(() => this.hasToursAvailable = Object.keys(this.$tours).length);
         },
         beforeDestroy() {
             this.$root.$off('closeAdvancedSearchShortcut');
@@ -259,6 +268,9 @@
             }
             .button:hover, .button:active, .button:focus {
                 background-color: white !important;
+            }
+            .button:disabled .icon {
+                color: $gray3;
             }
 
             .tainacan-icon-wordpress {

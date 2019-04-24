@@ -8,7 +8,7 @@
         <b-loading :active.sync="isLoadingCollections"/>
         <section class="home-section home-section-repository">
             <tainacan-tour
-                    name="homeTour"
+                    :name="$i18n.get('label_plugin_home_page')"
                     :steps="homeTourSteps"
                     position="bottom"/>
             <div 
@@ -244,8 +244,8 @@ export default {
 
             this.showWelcome = false;
 
-            if (shouldPerformTour)
-                this.$tours.homeTour.start();
+            if (shouldPerformTour && this.$tours[this.$i18n.get('label_plugin_home_page')])
+                this.$tours[this.$i18n.get('label_plugin_home_page')].start();
 
         }
     },
@@ -256,6 +256,10 @@ export default {
             this.showWelcome = true;
             this.$userPrefs.set('hasShownHomeWelcome', true);
         //}
+    },
+    beforeDestroy() {
+        // Removes home tour from the list of available tours.
+        delete this.$tours[this.$i18n.get('label_plugin_home_page')];
     }
 }
 </script>

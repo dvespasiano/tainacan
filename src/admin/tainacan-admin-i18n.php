@@ -405,7 +405,8 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'label_previous_group_slides'					 => __( 'Previous group of slides', 'tainacan' ),	
 	'label_plugin_home_page'					 	 => __( 'Plugin home page', 'tainacan' ),	
 	'label_wordpress_admin_page'					 => __( 'WordPress Admin Page', 'tainacan' ),	
-	'label_interface_tour'							 => __( 'Interface tour', 'tainacan' ),	
+	'label_interface_tours'			 => __( 'Interface tours', 'tainacan' ),	
+	'label_no_interface_tours_available'			 => __( 'No interface tours available', 'tainacan' ),	
 	'label_begin_tour'								 => __( 'Begin tour', 'tainacan' ),	
 	'label_skip'									 => __( 'Skip', 'tainacan' ),	
 
