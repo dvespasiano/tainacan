@@ -64,16 +64,12 @@ I18NPlugin.install = function (Vue, options = {}) {
             return (string != undefined && string != null && string != '' ) ? string : "Invalid i18n key: " + tainacan_plugin.i18n[key];
         },
         getFrom(entity, key) {
-            if (entity == 'taxonomies') // Temporary hack, while we decide this terminology...
-                entity = 'taxonomies'
             if (tainacan_plugin.i18n['entities_labels'][entity] == undefined)
                 return 'Invalid i18n entity: ' + entity;
             let string = tainacan_plugin.i18n['entities_labels'][entity][key];
             return (string != undefined && string != null && string != '' ) ? string : "Invalid i18n key: " + key;
         },
         getHelperTitle(entity, key) {
-            if (entity == 'taxonomies') // Temporary hack, while we decide this terminology...
-                entity = 'taxonomies'
             if (tainacan_plugin.i18n['helpers_label'][entity] == undefined)
                 return 'Invalid i18n entity: ' + entity;
             if (tainacan_plugin.i18n['helpers_label'][entity][key] == undefined)
@@ -82,14 +78,16 @@ I18NPlugin.install = function (Vue, options = {}) {
             return (string != undefined && string != null && string != '' ) ? string : "Invalid i18n helper object.";
         },
         getHelperMessage(entity, key) {
-            if (entity == 'taxonomies') // Temporary hack, while we decide this terminology...
-                entity = 'taxonomies'
             if (tainacan_plugin.i18n['helpers_label'][entity] == undefined)
                 return 'Invalid i18n entity: ' + entity;
             if (tainacan_plugin.i18n['helpers_label'][entity][key] == undefined)
                 return 'Invalid i18n key: ' + key;
             let string = tainacan_plugin.i18n['helpers_label'][entity][key].description;
             return (string != undefined && string != null && string != '' ) ? string : "Invalid i18n helper object. ";
+        },
+        getTourMessage(tour, step) {
+            let string = tainacan_plugin.i18n['tour_' + tour + '_' + step];
+            return (string != undefined && string != null && string != '' ) ? string : "Invalid i18n tour string. ";
         },
 
         /**

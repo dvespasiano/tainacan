@@ -15,7 +15,9 @@
                     class="section-connector" 
                     aria-hidden/>
             <div class="home-section-header repository-section-header">
-                <div class="home-section-icon">
+                <div
+                        data-v-step="1"
+                        class="home-section-icon">
                     <span class="icon">
                         <i class="tainacan-icon tainacan-icon-repository"/>
                     </span>
@@ -53,7 +55,7 @@
                             <span class="menu-text">{{ $i18n.get('label_all_items') }}</span>
                         </router-link>
                     </li> -->
-                    <li data-v-step="1">
+                    <li data-v-step="1.1">
                         <router-link
                                 tag="a"
                                 to="/metadata">
@@ -63,7 +65,7 @@
                             <span class="menu-text">{{ $i18n.get('title_repository_metadata_page' ) }}</span>
                         </router-link>
                     </li>
-                    <li data-v-step="2">
+                    <li data-v-step="1.2">
                         <router-link
                                 tag="a"
                                 to="/filters">
@@ -119,7 +121,9 @@
 
         <section class="home-section home-section-collection">
             <div class="home-section-header collections-section-header">
-                <div class="home-section-icon">
+                <div
+                        data-v-step="2"
+                        class="home-section-icon">
                     <router-link
                         tag="span"
                         class="icon"
@@ -162,17 +166,33 @@ export default {
                 {
                     target: '[data-v-step="1"]',
                     content: {
+                        icon: 'repository',
+                        title: this.$i18n.get('repository' ),
+                        description: this.$i18n.getTourMessage('home', 1)
+                    },
+                },
+                {
+                    target: '[data-v-step="1.1"]',
+                    content: {
                         icon: 'metadata',
                         title: this.$i18n.get('title_repository_metadata_page' ),
-                        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua.'
+                        description: this.$i18n.getTourMessage('home', 1.1)
                     },
+                },
+                {   
+                    target: '[data-v-step="1.2"]',
+                    content: {
+                        icon: 'filters',
+                        title: this.$i18n.get('title_repository_filters_page'),
+                        description: this.$i18n.getTourMessage('home', 1.2)
+                    }
                 },
                 {   
                     target: '[data-v-step="2"]',
                     content: {
-                        icon: 'filters',
-                        title: this.$i18n.get('title_repository_filters_page'),
-                        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                        icon: 'collections',
+                        title: this.$i18n.get('collections'),
+                        description: this.$i18n.getTourMessage('home', 2)
                     }
                 },
                 {   
@@ -180,7 +200,7 @@ export default {
                     content: {
                         icon: 'taxonomies',
                         title: this.$i18n.getFrom('taxonomies', 'name'),
-                        description: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                        description: this.$i18n.getTourMessage('home', 3) 
                     },
                 },
                 {
@@ -188,7 +208,15 @@ export default {
                     content: {
                         icon: 'activities',
                         title: this.$i18n.get('title_repository_activities_page'),
-                        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                        description: this.$i18n.getTourMessage('home', 4) 
+                    },
+                },
+                {
+                    target: '[data-v-step="4.1"]',
+                    content: {
+                        icon: 'processes',
+                        title: this.$i18n.get('processes'),
+                        description: this.$i18n.getTourMessage('home', 4.1) 
                     },
                 },
                 {   
@@ -196,7 +224,7 @@ export default {
                     content: {
                         icon: 'importers',
                         title: this.$i18n.get('importers'),
-                        description: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                        description: this.$i18n.getTourMessage('home', 5)
                     },
                 },
                 {   
@@ -204,7 +232,31 @@ export default {
                     content: {
                         icon: 'export',
                         title: this.$i18n.get('exporters'),
-                        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et <a href="wiki.tainacan.org" target="_blank">link para a wiki</a> magna aliqua. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+                        description: this.$i18n.getTourMessage('home', 6)
+                    }
+                },
+                {   
+                    target: '[data-v-step="7"]',
+                    content: {
+                        icon: 'addcollection',
+                        title: this.$i18n.get('label_create_collection'),
+                        description: this.$i18n.getTourMessage('home', 7)
+                    }
+                },
+                {   
+                    target: '[data-v-step="8"]',
+                    content: {
+                        icon: 'wordpress',
+                        title: this.$i18n.get('label_wordpress_admin_page'),
+                        description: this.$i18n.getTourMessage('home', 8)
+                    }
+                },
+                {   
+                    target: '[data-v-step="9"]',
+                    content: {
+                        icon: 'tour',
+                        title: this.$i18n.get('label_interface_tours'),
+                        description: this.$i18n.getTourMessage('home', 9)
                     }
                 }
             ],

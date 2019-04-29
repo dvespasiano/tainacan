@@ -589,6 +589,20 @@ return apply_filters( 'tainacan-admin-i18n', [
 	'info_tainacan_api'				 				 => __('Tainacan API on JSON format.', 'tainacan'),
 	'info_items_hidden_due_sorting'					 => __('When ordering by metadata value, items that have no value for the chosen metadata will not be listed. This list may have less elements than the total existing for current search criteria.', 'tainacan'),
 
+	// Interface Tours
+	'tour_home_1'	=> __('Esta é a tela inicial do seu repositório com o Tainacan. Crie, exporte e importe itens e coleções do seu acervo com informações qualificadas por metadados e filtros.', 'tainacan'),
+	'tour_home_1.1'	=> __('Crie metadados de diferentes tipos, de acordo com cada tipo de informação, para todas coleções no seu repositório. As coleções irão herdar os metadados criados a nível de repositório para o preenchimento em cada item.', 'tainacan'),
+	'tour_home_1.2'	=> __('Crie filtros a nível de repositório para utilizar os dados de metadados a nível de repositório como opção para a consulta e visualização de itens do seu acervo.', 'tainacan'),
+	'tour_home_2'	=> __('Crie coleções para agrupar conjuntos específicos de metadados, filtros, configurações de privacidade e itens.<br>Envie itens para as coleções criadas no seu repositório e preencha seus respectivos valores para cada metadado.<br>As coleções herdarão metadados e filtros criados a nível de repositório, que podem ser desabilitados de forma opcional.', 'tainacan'),
+	'tour_home_3'	=> __('Crie ou importe vocabulários controlados inteiros, com diferentes níveis hierárquicos e campos de descrição e ilustração individuais para cada termo.<br>A partir de um único termo é possível navegar em itens de diferentes coleções, permitindo novas formas de visualização de todo o acervo.<br>Utilize cada taxonomia criando o metadado do tipo Taxonomia: com ele é possível selecionar vocabulários controlados para o preenchimento de informações em itens nas coleções e em todo o repositório.', 'tainacan'),
+	'tour_home_4'	=> __('Monitore e revise as alterações a nível de repositório, coleções, itens e valores de metadados.<br>As ações realizadas em todo o repositório registram o autor, horário e valor alterado, permitindo ao administrador validar ou reverter as alterações se necessário', 'tainacan'),
+	'tour_home_4.1'	=> __('Realize operações em massa e acompanhe seu processo a qualquer momento enquanto realiza outras atividades no próprio repositório.', 'tainacan'),
+	'tour_home_5'	=> __('Importe novos vocabulários, itens e coleções para seu repositório a partir de fontes externas como YouTube, Flickr ou mesmo de bases de dados em .csv ou OAI-PMH.', 'tainacan'),
+	'tour_home_6'	=> __('Exporte coleções e vocabulários diretamente do seu repositório para um arquivo <em>.csv</em>.', 'tainacan'),
+	'tour_home_7'	=> __('Crie coleções para agrupar conjuntos específicos de metadados, filtros, configurações de privacidade e itens.<br>Envie itens para as coleções criadas no seu repositório e preencha seus respectivos valores para cada metadado.', 'tainacan'),
+	'tour_home_8'	=> __('Clique neste ícone a qualquer momento para voltar ao painel do WordPress do seu site.', 'tainacan'),
+	'tour_home_9'	=> __('Acesse tutoriais como este que te explicarão elementos da interface do Tainacan.', 'tainacan'),
+
 	// Tainacan Metadatum Types
 	'tainacan-text'                                  => __( 'Text', 'tainacan' ),
 	'tainacan-textarea'                              => __( 'Text area', 'tainacan' ),

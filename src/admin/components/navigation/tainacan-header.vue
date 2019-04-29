@@ -90,6 +90,7 @@
 
             </div>
             <button
+                    data-v-step="9"
                     :disabled="!hasToursAvailable"
                     @click="showTours = !showTours"
                     class="button is-small is-white level-item"
@@ -107,6 +108,7 @@
                     v-if="showTours"
                     @closeToursPopup="showTours = false"/>
             <button
+                    data-v-step="4.1"
                     @click="showProcesses = !showProcesses"
                     class="button is-small is-white level-item"
                     v-tooltip="{
@@ -123,6 +125,7 @@
                     v-if="showProcesses"
                     @closeProcessesPopup="showProcesses = false"/>
             <a
+                    data-v-step="8"
                     class="level-item"
                     :href="wordpressAdmin"
                     v-tooltip="{
