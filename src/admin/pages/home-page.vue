@@ -11,9 +11,6 @@
                     :name="$i18n.get('label_plugin_home_page')"
                     :steps="homeTourSteps"
                     position="bottom"/>
-            <div 
-                    class="section-connector" 
-                    aria-hidden/>
             <div class="home-section-header repository-section-header">
                 <div
                         data-v-step="1"
@@ -125,9 +122,9 @@
                         data-v-step="2"
                         class="home-section-icon">
                     <router-link
-                        tag="span"
-                        class="icon"
-                        to="/collections">
+                            tag="span"
+                            class="icon"
+                            to="/collections">
                         <i class="tainacan-icon tainacan-icon-collections"/>
                     </router-link>
                 </div>
@@ -329,23 +326,17 @@ export default {
         .home-section {
             
             &.home-section-repository{
-                position: relative;
+                border-left: 1px solid #cbcbcb;
+                padding-left: -15px;
+                border-bottom: 1px solid #cbcbcb;
+                padding-bottom: 38px;
                 &>nav {
-                    padding-left: 52px;
+                    padding-left: 28px;
                 }
             }
             &.home-section-collection {
-                margin-left: 52px;
-            }
-
-            .section-connector {
-                border-left: 1px solid $gray2;
-                border-bottom: 1px solid $gray2;
-                position: absolute;
-                width: 42px;
-                height: 100%;
-                top: 43px;
-                left: 26px;
+                margin-left: 30px;
+                margin-top: -42px;
             }
 
             .home-section-header {
@@ -395,6 +386,8 @@ export default {
 
                 &.repository-section-header {
                     border-bottom: 1px solid $blue5;
+                    margin-left: -26px;
+                    width: calc(100% + 25px);
                     a {
                         color: $blue5;
                     }
@@ -405,6 +398,8 @@ export default {
                 }
                 &.collections-section-header {
                     border-bottom: 1px solid $turquoise5;
+                    background: white;
+                    
                     a {
                         color: $turquoise5;
                     }

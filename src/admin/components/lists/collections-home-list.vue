@@ -77,7 +77,9 @@
                         tag="a" 
                         :to="$routerHelper.getNewCollectionPath()"
                         class="tainacan-card new-card">
-                    <div class="list-metadata">
+                    <div
+                            data-v-step="7"
+                            class="list-metadata">
                         <span class="icon is-large">
                             <i class="tainacan-icon tainacan-icon-36px tainacan-icon-addcollection"/>
                         </span>
