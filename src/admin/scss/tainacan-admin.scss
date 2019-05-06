@@ -114,6 +114,23 @@ a:hover {
     }
 }
 
+// Metadata type textarea has different separators in different spots on interface
+.multivalue-separator {
+    color: $gray3;
+    margin: 0 8px;    
+}
+.metadata-type-textarea {
+    .multivalue-separator {
+        display: block;
+        max-height: 1px;
+        width: 35px;
+        background: $gray3;
+        content: none;
+        color: transparent;
+        margin: 1rem auto;
+    }
+}
+
 // Buefy notices (toast, snackbar...)
 .notices {
     z-index: 99999999999999 !important;
