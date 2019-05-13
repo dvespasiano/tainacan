@@ -3,7 +3,9 @@
             :name="name"
             :steps="steps">
         <template slot-scope="tour">
-        
+            <div
+                    v-if="tour.currentStep >= 0"
+                    class="tainacan-tour-background"/>
             <transition name="fade">
                 <v-step
                         v-if="tour.currentStep === index"
@@ -85,7 +87,7 @@
         props: {
             name: String,
             steps: Array
-        }
+        },
     }
 </script>
 
@@ -94,6 +96,19 @@
     @import '../../scss/_variables.scss';
 
     .v-tour {
+        .tainacan-tour-background {
+            background-color: rgba(0,0,0,0.4);
+            width: 100%;
+            height: 100%;
+            width: 100vw;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            position: fixed;
+            z-index: 999;
+        }
         .v-step {
             background: white;
             border-radius: 5px;

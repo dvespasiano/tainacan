@@ -14,6 +14,7 @@
             <div class="home-section-header repository-section-header">
                 <div
                         data-v-step="1"
+                        :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 0 ? '999999999' : '' }"
                         class="home-section-icon">
                     <span class="icon">
                         <i class="tainacan-icon tainacan-icon-repository"/>
@@ -52,7 +53,9 @@
                             <span class="menu-text">{{ $i18n.get('label_all_items') }}</span>
                         </router-link>
                     </li> -->
-                    <li data-v-step="1.1">
+                    <li
+                            :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 1 ? '999999999' : '' }"
+                            data-v-step="1.1">
                         <router-link
                                 tag="a"
                                 to="/metadata">
@@ -62,7 +65,9 @@
                             <span class="menu-text">{{ $i18n.get('title_repository_metadata_page' ) }}</span>
                         </router-link>
                     </li>
-                    <li data-v-step="1.2">
+                    <li
+                            :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 2 ? '999999999' : '' }"
+                            data-v-step="1.2">
                         <router-link
                                 tag="a"
                                 to="/filters">
@@ -72,7 +77,9 @@
                             <span class="menu-text">{{ $i18n.get('title_repository_filters_page') }}</span>
                         </router-link>
                     </li>
-                    <li data-v-step="3">
+                    <li
+                            :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 4 ? '999999999' : '' }"
+                            data-v-step="3">
                         <router-link
                                 tag="a"
                                 to="/taxonomies">
@@ -82,7 +89,9 @@
                             <span class="menu-text">{{ $i18n.getFrom('taxonomies', 'name') }}</span>
                         </router-link>
                     </li>
-                    <li data-v-step="4">
+                    <li
+                            :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 5 ? '999999999' : '' }"
+                            data-v-step="4">
                         <router-link
                                 tag="a"
                                 to="/activities">
@@ -92,7 +101,9 @@
                             <span class="menu-text">{{ $i18n.get('title_repository_activities_page') }}</span>
                         </router-link>
                     </li>
-                    <li data-v-step="5">
+                    <li
+                            :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 7 ? '999999999' : '' }"
+                            data-v-step="5">
                         <router-link
                                 tag="a"
                                 to="/importers">
@@ -102,7 +113,9 @@
                             <span class="menu-text menu-text-import">{{ $i18n.get('importers') }}</span>
                         </router-link>
                     </li>
-                    <li data-v-step="6">
+                    <li
+                            :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 8 ? '999999999' : '' }"
+                            data-v-step="6">
                         <router-link
                                 tag="a"
                                 to="/exporters">
@@ -120,6 +133,7 @@
             <div class="home-section-header collections-section-header">
                 <div
                         data-v-step="2"
+                        :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 3 ? '999999999' : '' }"
                         class="home-section-icon">
                     <router-link
                             tag="span"

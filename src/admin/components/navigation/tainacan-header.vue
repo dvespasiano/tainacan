@@ -90,6 +90,7 @@
 
             </div>
             <button
+                    :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 11 ? '999999999' : '' }"
                     data-v-step="9"
                     :disabled="!hasToursAvailable"
                     @click="showTours = !showTours"
@@ -108,6 +109,7 @@
                     v-if="showTours"
                     @closeToursPopup="showTours = false"/>
             <button
+                    :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 6 ? '999999999' : '' }"
                     data-v-step="4.1"
                     @click="showProcesses = !showProcesses"
                     class="button is-small is-white level-item"
@@ -125,6 +127,7 @@
                     v-if="showProcesses"
                     @closeProcessesPopup="showProcesses = false"/>
             <a
+                    :style="{ zIndex: $tours[$i18n.get('label_plugin_home_page')] && $tours[$i18n.get('label_plugin_home_page')].currentStep == 10 ? '999999999' : '' }"
                     data-v-step="8"
                     class="level-item"
                     :href="wordpressAdmin"
