@@ -109,12 +109,15 @@ class REST_Items_Controller extends REST_Controller {
 	 * @return mixed
 	 */
 	private function add_metadata_to_item($item_object, $item_array, $args = []){
+		debug_time('START add_metadata_to_item');
 		$item_metadata = $item_object->get_metadata($args);
-
+		debug_time('after get_metadata');
 		foreach($item_metadata as $index => $me){
 			$metadatum               = $me->get_metadatum();
+			debug_time('after get_metadatum');
 			$slug                = $metadatum->get_slug();
 			$item_metadata_array = $me->_toArray();
+			debug_time('after item_meta_to_array');
 
 			$item_array['metadata'][ $slug ]['name']            = $metadatum->get_name();
 			if($metadatum->get_metadata_type_object()->get_primitive_type() === 'date') {
@@ -127,7 +130,7 @@ class REST_Items_Controller extends REST_Controller {
 			$item_array['metadata'][ $slug ]['multiple']        = $metadatum->get_multiple();
 			$item_array['metadata'][ $slug ]['mapping']        = $metadatum->get_exposer_mapping();
 		}
-
+		debug_time('END add_metadata_to_item');
 		return $item_array;
 	}
 
@@ -139,7 +142,7 @@ class REST_Items_Controller extends REST_Controller {
 	 */
 	public function prepare_item_for_response( $item, $request ) {
 		if(!empty($item)){
-
+			debug_time('Start Prepare item for response');
 			/**
 			 * Use this filter to add additional post_meta to the api response
 			 * Use the $request object to get the context of the request and other variables
@@ -155,8 +158,9 @@ class REST_Items_Controller extends REST_Controller {
 			}
 			
 			if(!isset($request['fetch_only'])) {
+				debug_time('Before Item to array');
 				$item_arr = $item->_toArray();
-				
+				debug_time('After Item to array');
 				$item_arr = array_merge($extra_metadata_values, $item_arr);
 
 				if ( $request['context'] === 'edit' ) {
@@ -169,10 +173,13 @@ class REST_Items_Controller extends REST_Controller {
 				if($request['doc_img_size']){
 					$img_size = $request['doc_img_size'];
 				}
-
+				debug_time('before document_as_html');
 				$item_arr['document_as_html'] = $item->get_document_html($img_size);
+				debug_time('After document_as_html');
 				$item_arr['exposer_urls'] = \Tainacan\Exposers_Handler::get_exposer_urls(rest_url("{$this->namespace}/{$this->rest_base}/{$item->get_id()}/"));
+				debug_time('After exposer_urls');
 				$item_arr = $this->add_metadata_to_item( $item, $item_arr );
+				debug_time('After add_metadata_to_item');
 			} else {
 				
 				$attributes_to_filter = $request['fetch_only'];
@@ -216,6 +223,8 @@ class REST_Items_Controller extends REST_Controller {
 			}
 
 			$item_arr = apply_filters('tainacan-api-items-prepare-for-response', $item_arr, $item, $request);
+			
+			debug_time('END Prepare item for response');
 			
 			return $item_arr;
 		}
@@ -287,7 +296,9 @@ class REST_Items_Controller extends REST_Controller {
 		$response['filters'] = apply_filters('tainacan-api-items-filters-response', [], $request);
 		
 		$query_end = microtime(true);
-
+		
+		debug_time('after_query');
+		
 		$return_template = false;
 
 		if ( isset($request['view_mode']) ) {
@@ -334,6 +345,7 @@ class REST_Items_Controller extends REST_Controller {
 		} else {
 
 			if ($items->have_posts()) {
+				debug_time('Start Loop Items');
 				while ( $items->have_posts() ) {
 					$items->the_post();
 	
@@ -343,7 +355,7 @@ class REST_Items_Controller extends REST_Controller {
 	
 					array_push($response['items'], $prepared_item);
 				}
-	
+				debug_time('End Loop Items');
 				wp_reset_postdata();
 			}
 			

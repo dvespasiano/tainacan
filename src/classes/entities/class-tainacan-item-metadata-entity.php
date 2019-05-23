@@ -214,15 +214,27 @@ class Item_Metadata_Entity extends Entity {
 		$as_array = [];
 		
 		$as_array['value'] = $this->get_value_as_array();
+		
+		debug_time('got Value as array');
+		
 		$as_array['value_as_html'] = $this->get_value_as_html();
+		
+		debug_time('got Value as html');
+		
 		$as_array['value_as_string'] = $this->get_value_as_string();
+		
+		debug_time('got Value as string');
 
 		if($this->get_metadatum()->get_metadata_type_object()->get_primitive_type() === 'date'){
 			$as_array['date_i18n'] = $this->get_date_i18n($this->get_value_as_string());
 		}
 
 	    $as_array['item']  = $this->get_item()->_toArray();
+		debug_time('got Items as array');
+		
 	    $as_array['metadatum'] = $this->get_metadatum()->_toArray();
+		
+		debug_time('Got metadatum as array');
 
 		return apply_filters('tainacan-item-metadata-to-array', $as_array, $this);
     }

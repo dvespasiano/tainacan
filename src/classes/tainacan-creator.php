@@ -180,5 +180,89 @@ if (class_exists('WP_CLI')) {
 	$Tainacan_Cli = \Tainacan\Cli::get_instance();
 }
 
+class TainacanDebugTime {
+	
+	private $time;
+	private $start;
+	private $active = false;
+	
+	private $checkpoints = [];
+	private $report = [];
+	
+	private static $instance = null;
 
+	public static function get_instance() {
+		if ( ! isset( self::$instance ) ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
+	
+	private function __construct() {
+		$this->time = microtime(true);
+		$this->start = $this->time;
+		
+		$this->active = defined('TAINACAN_DEBUG_TIME') && TAINACAN_DEBUG_TIME === true;
+		
+		if ($this->active)
+			register_shutdown_function([$this, 'shutdown']);
+	}
+	
+	function add($point) {
+		
+		if (!$this->active) {
+			return;
+		}
+		
+		$now = microtime(true);
+		
+		$elapsed = ($now - $this->time);
+		$this->time = $now;
+		$from_start = ($now - $this->start);
+		$elapsed_formatted = number_format($elapsed, 12, '.', '');
+		$from_start_formatted = number_format($from_start, 12, '.', '');
+		
+		$backtrace = debug_backtrace();
+		
+		$this->checkpoints[] = [
+			$elapsed_formatted,
+			$from_start_formatted,
+			$point,
+			$backtrace[1]['file'],
+			$backtrace[1]['line'],
+			$backtrace[2]['function'],
+		];
+		
+		if (isset($this->report[$point])) {
+			$this->report[$point] += $elapsed;
+		} else {
+			$this->report[$point] = $elapsed;
+		}
+		
+	}
+	
+	public function shutdown() {
+		
+		$output = array_map(function($el) { return implode(' ; ', $el); }, $this->checkpoints);
+		$output = implode("\n", $output);
+		
+		$output .= "\n\n ============= GROUPED =============\n";
+		
+		foreach ($this->report as $k => $r) {
+			$output .= number_format($r, 12, '.', '') . $k . "\n";
+		}
+		
+		file_put_contents( '/tmp/tainacan-debug-time',  $output, FILE_APPEND );
+		
+	}
+	
+}
+
+$debugTime = \TainacanDebugTime::get_instance();
+
+function debug_time($point) {
+	$debugTime = \TainacanDebugTime::get_instance();
+	$debugTime->add($point);
+}
 ?>
