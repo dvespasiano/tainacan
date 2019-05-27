@@ -1,56 +1,56 @@
 <template>
     <div :class="className">
-        <div v-if="showCollectionHeader">
+        <div v-if="showTaxonomyHeader">
             <div
-                    v-if="isLoadingCollection"
-                    class="dynamic-items-collection-header skeleton" 
+                    v-if="isLoadingTaxonomy"
+                    class="dynamic-terms-taxonomy-header skeleton" 
                     :style="{ height: '165px' }"/>
             <a
                     v-else
                     target="_blank"
-                    :href="collection.url ? collection.url : ''"
-                    class="dynamic-items-collection-header">
+                    :href="taxonomy.url ? taxonomy.url : ''"
+                    class="dynamic-terms-taxonomy-header">
                 <div
                         :style="{
-                            backgroundColor: collectionBackgroundColor ? collectionBackgroundColor : '', 
-                            paddingRight: collection && collection.thumbnail && (collection.thumbnail['tainacan-medium'] || collection.thumbnail['medium']) ? '' : '20px',
-                            paddingTop: (!collection || !collection.thumbnail || (!collection.thumbnail['tainacan-medium'] && !collection.thumbnail['medium'])) ? '1rem' : '',
-                            width: collection && collection.header_image ? '' : '100%'
+                            backgroundColor: taxonomyBackgroundColor ? taxonomyBackgroundColor : '', 
+                            paddingRight: taxonomy && taxonomy.thumbnail && (taxonomy.thumbnail['tainacan-medium'] || taxonomy.thumbnail['medium']) ? '' : '20px',
+                            paddingTop: (!taxonomy || !taxonomy.thumbnail || (!taxonomy.thumbnail['tainacan-medium'] && !taxonomy.thumbnail['medium'])) ? '1rem' : '',
+                            width: taxonomy && taxonomy.header_image ? '' : '100%'
                         }"
                         :class="
-                            'collection-name ' + 
-                            ((!collection || !collection.thumbnail || (!collection.thumbnail['tainacan-medium'] && !collection.thumbnail['medium'])) && (!collection || !collection.header_image) ? 'only-collection-name' : '') 
+                            'taxonomy-name ' + 
+                            ((!taxonomy || !taxonomy.thumbnail || (!taxonomy.thumbnail['tainacan-medium'] && !taxonomy.thumbnail['medium'])) && (!taxonomy || !taxonomy.header_image) ? 'only-taxonomy-name' : '') 
                         ">
-                    <h3 :style="{ color: collectionTextColor ? collectionTextColor : '' }">
+                    <h3 :style="{ color: taxonomyTextColor ? taxonomyTextColor : '' }">
                         <span
-                                v-if="showCollectionLabel"
+                                v-if="showTaxonomyLabel"
                                 class="label">
-                            {{ $root.__('Collection', 'tainacan') }}
+                            {{ $root.__('Taxonomy', 'tainacan') }}
                             <br>
                         </span>
-                        {{ collection && collection.name ? collection.name : '' }}
+                        {{ taxonomy && taxonomy.name ? taxonomy.name : '' }}
                     </h3>
                 </div>
                 <div
-                    v-if="collection && collection.thumbnail && (collection.thumbnail['tainacan-medium'] || collection.thumbnail['medium'])"   
-                    class="collection-thumbnail"
+                    v-if="taxonomy && taxonomy.thumbnail && (taxonomy.thumbnail['tainacan-medium'] || taxonomy.thumbnail['medium'])"   
+                    class="taxonomy-thumbnail"
                     :style="{ 
-                        backgroundImage: 'url(' + (collection.thumbnail['tainacan-medium'] != undefined ? (collection.thumbnail['tainacan-medium'][0]) : (collection.thumbnail['medium'][0])) + ')',
+                        backgroundImage: 'url(' + (taxonomy.thumbnail['tainacan-medium'] != undefined ? (taxonomy.thumbnail['tainacan-medium'][0]) : (taxonomy.thumbnail['medium'][0])) + ')',
                     }"/>
                 <div
-                        class="collection-header-image"
+                        class="taxonomy-header-image"
                         :style="{
-                            backgroundImage: collection.header_image ? 'url(' + collection.header_image + ')' : '',
-                            minHeight: collection && collection.header_image ? '' : '80px',
-                            display: !(collection && collection.thumbnail && (collection.thumbnail['tainacan-medium'] || collection.thumbnail['medium'])) ? collection && collection.header_image ? '' : 'none' : ''  
+                            backgroundImage: taxonomy.header_image ? 'url(' + taxonomy.header_image + ')' : '',
+                            minHeight: taxonomy && taxonomy.header_image ? '' : '80px',
+                            display: !(taxonomy && taxonomy.thumbnail && (taxonomy.thumbnail['tainacan-medium'] || taxonomy.thumbnail['medium'])) ? taxonomy && taxonomy.header_image ? '' : 'none' : ''  
                         }"/>
             </a>   
         </div>
         <div
                 v-if="showSearchBar"
-                class="dynamic-items-search-bar">
+                class="dynamic-terms-search-bar">
             <button
-                    @click="localOrder = 'asc'; fetchItems()"
+                    @click="localOrder = 'asc'; fetchTerms()"
                     :class="localOrder == 'asc' ? 'sorting-button-selected' : ''"
                     :label="$root.__('Sort ascending', 'tainacan')">
                 <span class="icon">
@@ -65,7 +65,7 @@
                 </span>
             </button>  
             <button
-                    @click="localOrder = 'desc'; fetchItems(); "
+                    @click="localOrder = 'desc'; fetchTerms(); "
                     :class="localOrder == 'desc' ? 'sorting-button-selected' : ''"
                     :label="$root.__('Sort descending', 'tainacan')">
                 <span class="icon">
@@ -81,7 +81,7 @@
                 </span>
             </button>  
             <button
-                    @click="fetchItems()"
+                    @click="fetchTerms()"
                     :label="$root.__('Search', 'tainacan')"
                     class="search-button">
                 <span class="icon">
@@ -110,7 +110,7 @@
             <button
                     class="previous-button"
                     v-if="paged > 1"
-                    @click="paged--; fetchItems()"
+                    @click="paged--; fetchTerms()"
                     :label="$root.__('Previous page', 'tainacan')">
                 <span class="icon">
                     <i>
@@ -129,7 +129,7 @@
             <button
                     :style="{ marginLeft: paged <= 1 ? 'auto' : '0' }"
                     class="next-button"
-                    v-if="paged < totalItems/maxItemsNumber && items.length < totalItems"
+                    v-if="paged < totalTerms/maxItemsNumber && terms.length < totalItems"
                     @click="paged++; fetchItems()"
                     :label="$root.__('Next page', 'tainacan')">
                 <span class="icon">
@@ -151,14 +151,14 @@
                 v-if="isLoading"
                 :style="{
                     gridTemplateColumns: layout == 'grid' ? 'repeat(auto-fill, ' + (gridMargin + (showName ? 220 : 185)) + 'px)' : 'inherit', 
-                    marginTop: showSearchBar || showCollectionHeader ? '1.34rem' : '0px'
+                    marginTop: showSearchBar || showTaxonomyHeader ? '1.34rem' : '0px'
                 }"
-                class="items-list"
-                :class="'items-layout-' + layout + (!showName ? ' items-list-without-margin' : '')">
+                class="terms-list"
+                :class="'terms-layout-' + layout + (!showName ? ' terms-list-without-margin' : '')">
                 <li
-                        :key="item"
-                        v-for="item in Number(maxItemsNumber)"
-                        class="item-list-item skeleton"
+                        :key="term"
+                        v-for="term in Number(maxItemsNumber)"
+                        class="term-list-term skeleton"
                         :style="{ 
                             marginBottom: layout == 'grid' ? (showName ? gridMargin + 12 : gridMargin) + 'px' : '',
                             height: layout == 'grid' ? '230px' : '54px'
@@ -166,44 +166,34 @@
         </ul>
         <div v-else>
             <ul 
-                    v-if="items.length > 0"
+                    v-if="terms.length > 0"
                     :style="{
                         gridTemplateColumns: layout == 'grid' ? 'repeat(auto-fill, ' + (gridMargin + (showName ? 220 : 185)) + 'px)' : 'inherit', 
-                        marginTop: showSearchBar || showCollectionHeader ? '1.35rem' : '0px'
+                        marginTop: showSearchBar || showTaxonomyHeader ? '1.35rem' : '0px'
                     }"
-                    class="items-list"
-                    :class="'items-layout-' + layout + (!showName ? ' items-list-without-margin' : '')">
+                    class="terms-list"
+                    :class="'terms-layout-' + layout + (!showName ? ' terms-list-without-margin' : '')">
                 <li
                         :key="index"
-                        v-for="(item, index) of items"
-                        class="item-list-item"
+                        v-for="(term, index) of terms"
+                        class="term-list-term"
                         :style="{ marginBottom: layout == 'grid' ? (showName ? gridMargin + 12 : gridMargin) + 'px' : ''}">      
                     <a 
-                            :id="isNaN(item.id) ? item.id : 'item-id-' + item.id"
-                            :href="item.url"
+                            :id="isNaN(term.id) ? term.id : 'term-id-' + term.id"
+                            :href="term.url"
                             target="_blank"
-                            :class="(!showName ? 'item-without-title' : '') + ' ' + (!showImage ? 'item-without-image' : '')">
+                            :class="(!showName ? 'term-without-name' : '') + ' ' + (!showImage ? 'term-without-image' : '')">
                         <img
-                            :src=" 
-                                item.thumbnail && item.thumbnail['tainacan-medium'][0] && item.thumbnail['tainacan-medium'][0] 
-                                    ?
-                                item.thumbnail['tainacan-medium'][0] 
-                                    :
-                                (item.thumbnail && item.thumbnail['thumbnail'][0] && item.thumbnail['thumbnail'][0]
-                                    ?    
-                                item.thumbnail['thumbnail'][0] 
-                                    : 
-                                `${tainacanBaseUrl}/admin/images/placeholder_square.png`)
-                            "
-                            :alt="item.title ? item.title : $root.__('Thumbnail', 'tainacan')">
-                        <span>{{ item.title ? item.title : '' }}</span>
+                            :src="term.header_image ? term.header_image : `${tainacanBaseUrl}/admin/images/placeholder_square.png`"
+                            :alt="term.name ? term.name : $root.__('Thumbnail', 'tainacan')">
+                        <span>{{ term.name ? term.name : '' }}</span>
                     </a>
                 </li>
             </ul>
             <div
                     v-else
                     class="spinner-container">
-                {{ $root.__('No items found.', 'tainacan') }}
+                {{ $root.__('No terms found.', 'tainacan') }}
             </div>
         </div>
     </div>
@@ -218,12 +208,12 @@ export default {
     name: "DynamicTermsListTheme",
     data() {
         return {
-            items: [],
-            collection: undefined,
-            itemsRequestSource: undefined,
+            terms: [],
+            taxonomy: undefined,
+            termsRequestSource: undefined,
             searchString: '',
             isLoading: false,
-            isLoadingCollection: false,
+            isLoadingTaxonomy: false,
             localMaxItemsNumber: undefined,
             localOrder: undefined,
             tainacanAxios: undefined,
@@ -232,7 +222,7 @@ export default {
         }
     },
     props: {
-        collectionId: String,  
+        taxonomyId: String,  
         showImage: Boolean,
         showName: Boolean,
         layout: String,
@@ -241,10 +231,10 @@ export default {
         maxItemsNumber: Number,
         order: String,
         showSearchBar: Boolean,
-        showCollectionHeader: Boolean,
-        showCollectionLabel: Boolean,
-        collectionBackgroundColor: String,
-        collectionTextColor: String,
+        showTaxonomyHeader: Boolean,
+        showTaxonomyLabel: Boolean,
+        taxonomyBackgroundColor: String,
+        taxonomyTextColor: String,
         tainacanApiRoot: String,
         tainacanBaseUrl: String,
         className: String
@@ -262,19 +252,19 @@ export default {
         }, 500),
         fetchItems() {
 
-            this.items = [];
+            this.terms = [];
             this.isLoading = true;
             
-            if (this.itemsRequestSource != undefined && typeof this.itemsRequestSource == 'function')
-                this.itemsRequestSource.cancel('Previous items search canceled.');
+            if (this.termsRequestSource != undefined && typeof this.termsRequestSource == 'function')
+                this.termsRequestSource.cancel('Previous terms search canceled.');
 
-            this.itemsRequestSource = axios.CancelToken.source();
+            this.termsRequestSource = axios.CancelToken.source();
 
-            let endpoint = '/collection' + this.searchURL.split('#')[1].split('/collections')[1];
+            let endpoint = '/taxonomy' + this.searchURL.split('#')[1].split('/taxonomies')[1];
             let query = endpoint.split('?')[1];
             let queryObject = qs.parse(query);
 
-            // Set up max items to be shown
+            // Set up max terms to be shown
             if (this.maxItemsNumber != undefined && Number(this.maxItemsNumber) > 0)
                 queryObject.perpage = this.maxItemsNumber;
             else if (queryObject.perpage != undefined && queryObject.perpage > 0)
@@ -318,31 +308,31 @@ export default {
             delete queryObject.admin_view_mode;
             delete queryObject.fetch_only_meta;
             
-            endpoint = endpoint.split('?')[0] + '?' + qs.stringify(queryObject) + '&fetch_only=title,url,thumbnail';
+            endpoint = endpoint.split('?')[0] + '?' + qs.stringify(queryObject) + '&fetch_only=name,url,thumbnail';
             
-            this.tainacanAxios.get(endpoint, { cancelToken: this.itemsRequestSource.token })
+            this.tainacanAxios.get(endpoint, { cancelToken: this.termsRequestSource.token })
                 .then(response => {
 
-                    for (let item of response.data.items)
-                        this.items.push(item);
+                    for (let term of response.data.terms)
+                        this.terms.push(term);
 
                     this.isLoading = false;
-                    this.totalItems = response.headers['x-wp-total'];
+                    this.totalTerms = response.headers['x-wp-total'];
 
                 }).catch(() => { 
                     this.isLoading = false;
                     // console.log(error);
                 });
         },
-        fetchCollectionForHeader() {
-            if (this.showCollectionHeader) {
+        fetchTaxonomyForHeader() {
+            if (this.showTaxonomyHeader) {
 
-                this.isLoadingCollection = true;             
+                this.isLoadingTaxonomy = true;             
 
-                this.tainacanAxios.get('/collections/' + this.collectionId + '?fetch_only=name,thumbnail,header_image')
+                this.tainacanAxios.get('/taxonomies/' + this.taxonomyId + '?fetch_only=name,thumbnail,header_image')
                     .then(response => {
-                        this.collection = response.data;
-                        this.isLoadingCollection = false;      
+                        this.taxonomy = response.data;
+                        this.isLoadingTaxonomy = false;      
                     });
             }
         }
@@ -351,10 +341,10 @@ export default {
         this.tainacanAxios = axios.create({ baseURL: this.tainacanApiRoot });
         this.localOrder = this.order;
   
-        if (this.showCollectionHeader)
-            this.fetchCollectionForHeader();
+        if (this.showTaxonomyHeader)
+            this.fetchTaxonomyForHeader();
 
-        this.fetchItems();
+        this.fetchTerms();
     },
 }
 </script>

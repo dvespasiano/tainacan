@@ -31,11 +31,11 @@ registerBlockType('tainacan/dynamic-terms-list', {
             source: 'children',
             selector: 'div'
         },
-        collectionId: {
+        taxonomyId: {
             type: String,
             default: undefined
         },
-        items: {
+        terms: {
             type: Array,
             default: []
         },
@@ -59,15 +59,11 @@ registerBlockType('tainacan/dynamic-terms-list', {
             type: Number,
             default: 0
         },
-        searchURL: {
+        termsRequestSource: {
             type: String,
             default: undefined
         },
-        itemsRequestSource: {
-            type: String,
-            default: undefined
-        },
-        maxItemsNumber: {
+        maxTermsNumber: {
             type: Number,
             value: undefined
         },
@@ -75,7 +71,7 @@ registerBlockType('tainacan/dynamic-terms-list', {
             type: Boolean,
             value: false
         },
-        isLoadingCollection: {
+        isLoadingTaxonomy: {
             type: Boolean,
             value: false
         },
@@ -83,15 +79,15 @@ registerBlockType('tainacan/dynamic-terms-list', {
             type: Boolean,
             value: false
         },
-        showCollectionHeader: {
+        showTaxonomyHeader: {
             type: Boolean,
             value: false
         },
-        showCollectionLabel: {
+        showTaxonomyLabel: {
             type: Boolean,
             value: false
         },
-        collection: {
+        taxonomy: {
             type: Object,
             value: undefined
         },
@@ -107,11 +103,11 @@ registerBlockType('tainacan/dynamic-terms-list', {
             type: String,
             default: undefined
         },
-        collectionBackgroundColor: {
+        taxonomyBackgroundColor: {
             type: String,
             default: "#454647"
         },
-        collectionTextColor: {
+        taxonomyTextColor: {
             type: String,
             default: "#ffffff"
         }
@@ -122,57 +118,42 @@ registerBlockType('tainacan/dynamic-terms-list', {
     },
     edit({ attributes, setAttributes, className, isSelected, clientId }){
         let {
-            items, 
+            terms, 
             content, 
-            collectionId,  
+            taxonomyId,  
             showImage,
             showName,
             layout,
             isModalOpen,
             gridMargin,
-            searchURL,
-            itemsRequestSource,
-            maxItemsNumber,
+            termsRequestSource,
+            maxTermsNumber,
             order,
             searchString,
             isLoading,
             showSearchBar,
-            showCollectionHeader,
-            showCollectionLabel,
-            isLoadingCollection,
-            collection,
-            collectionBackgroundColor,
-            collectionTextColor
+            isLoadingTaxonomy,
+            taxonomy,
         } = attributes;
 
         // Obtains block's client id to render it on save function
         setAttributes({ blockId: clientId });
         
-        function prepareItem(item) {
+        function prepareTerm(term) {
             return (
                 <li 
-                    key={ item.id }
-                    className="item-list-item"
+                    key={ term.id }
+                    className="term-list-item"
                     style={{ marginBottom: layout == 'grid' ? (showName ? gridMargin + 12 : gridMargin) + 'px' : ''}}>      
                     <a 
-                        id={ isNaN(item.id) ? item.id : 'item-id-' + item.id }
-                        href={ item.url } 
+                        id={ isNaN(term.id) ? term.id : 'term-id-' + term.id }
+                        href={ term.url } 
                         target="_blank"
-                        className={ (!showName ? 'item-without-title' : '') + ' ' + (!showImage ? 'item-without-image' : '') }>
+                        className={ (!showName ? 'term-without-name' : '') + ' ' + (!showImage ? 'term-without-image' : '') }>
                         <img
-                            src={ 
-                                item.thumbnail && item.thumbnail['tainacan-medium'][0] && item.thumbnail['tainacan-medium'][0] 
-                                    ?
-                                item.thumbnail['tainacan-medium'][0] 
-                                    :
-                                (item.thumbnail && item.thumbnail['thumbnail'][0] && item.thumbnail['thumbnail'][0]
-                                    ?    
-                                item.thumbnail['thumbnail'][0] 
-                                    : 
-                                `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
-                            }
-                            alt={ item.title ? item.title : __( 'Thumbnail', 'tainacan' ) }/>
-                        <span>{ item.title ? item.title : '' }</span>
+                            src={ term.header_image ? term.header_image : `${tainacan_plugin.base_url}/admin/images/placeholder_square.png` }
+                            alt={ term.name ? term.name : __( 'Thumbnail', 'tainacan' ) }/>
+                        <span>{ term.name ? term.name : '' }</span>
                     </a>
                 </li>
             );
@@ -180,30 +161,30 @@ registerBlockType('tainacan/dynamic-terms-list', {
 
         function setContent(){
 
-            items = [];
+            terms = [];
             isLoading = true;
             
-            if (itemsRequestSource != undefined && typeof itemsRequestSource == 'function')
-                itemsRequestSource.cancel('Previous items search canceled.');
+            if (termsRequestSource != undefined && typeof termsRequestSource == 'function')
+                termsRequestSource.cancel('Previous terms search canceled.');
 
-            itemsRequestSource = axios.CancelToken.source();
+            termsRequestSource = axios.CancelToken.source();
             
             setAttributes({
                 isLoading: isLoading
             });
 
-            let endpoint = '/collection' + searchURL.split('#')[1].split('/collections')[1];
+            let endpoint = '/taxonomy/' + taxonomyId + '/terms/?order=asc&hideempty=0&number=12';
             let query = endpoint.split('?')[1];
             let queryObject = qs.parse(query);
 
-            // Set up max items to be shown
-            if (maxItemsNumber != undefined && maxItemsNumber > 0)
-                queryObject.perpage = maxItemsNumber;
-            else if (queryObject.perpage != undefined && queryObject.perpage > 0)
-                setAttributes({ maxItemsNumber: queryObject.perpage });
+            // Set up max terms to be shown
+            if (maxTermsNumber != undefined && maxTermsNumber > 0)
+                queryObject.number = maxTermsNumber;
+            else if (queryObject.number != undefined && queryObject.number > 0)
+                setAttributes({ maxTermsNumber: queryObject.number });
             else {
-                queryObject.perpage = 12;
-                setAttributes({ maxItemsNumber: 12 });
+                queryObject.number = 12;
+                setAttributes({ maxTermsNumber: 12 });
             }
 
             // Set up sorting order
@@ -216,74 +197,34 @@ registerBlockType('tainacan/dynamic-terms-list', {
                 setAttributes({ order: 'asc' });
             }
 
-            // Set up sorting order
+            // Set up search
             if (searchString != undefined)
-                queryObject.search = searchString;
-            else if (queryObject.search != undefined)
+                queryObject.searchterm = searchString;
+            else if (queryObject.searchterm != undefined)
                 setAttributes({ searchString: queryObject.search });
             else {
-                delete queryObject.search;
+                delete queryObject.searchterm;
                 setAttributes({ searchString: undefined });
             }
-
-            // Remove unecessary queries
-            delete queryObject.readmode;
-            delete queryObject.iframemode;
-            delete queryObject.admin_view_mode;
-            delete queryObject.fetch_only_meta;
             
-            endpoint = endpoint.split('?')[0] + '?' + qs.stringify(queryObject) + '&fetch_only=title,url,thumbnail';
+            endpoint = endpoint.split('?')[0] + '?' + qs.stringify(queryObject);
             
-            tainacan.get(endpoint, { cancelToken: itemsRequestSource.token })
+            tainacan.get(endpoint, { cancelToken: termsRequestSource.token })
                 .then(response => {
 
-                    for (let item of response.data.items)
-                        items.push(prepareItem(item));
+                    for (let term of response.data)
+                        terms.push(prepareTerm(term));
 
                     setAttributes({
                         content: <div></div>,
-                        items: items,
+                        terms: terms,
                         isLoading: false,
-                        itemsRequestSource: itemsRequestSource
+                        termsRequestSource: termsRequestSource
                     });
                 });
         }
 
-        function fetchCollectionForHeader() {
-            if (showCollectionHeader) {
-
-                isLoadingCollection = true;             
-                setAttributes({
-                    isLoadingCollection: isLoadingCollection
-                });
-
-                tainacan.get('/collections/' + collectionId + '?fetch_only=name,thumbnail,header_image')
-                    .then(response => {
-                        collection = response.data;
-                        isLoadingCollection = false;      
-
-                        if (collection.tainacan_theme_collection_background_color)
-                            collectionBackgroundColor = collection.tainacan_theme_collection_background_color;
-                        else
-                            collectionBackgroundColor = '#454647';
-
-                        if (collection.tainacan_theme_collection_color)
-                            collectionTextColor = collection.tainacan_theme_collection_color;
-                        else
-                            collectionTextColor = '#ffffff';
-
-                        setAttributes({
-                            content: <div></div>,
-                            collection: collection,
-                            isLoadingCollection: isLoadingCollection,
-                            collectionBackgroundColor: collectionBackgroundColor,
-                            collectionTextColor: collectionTextColor
-                        });
-                    });
-            }
-        }
-
-        function openDynamicItemsModal() {
+        function openDynamicTermsModal() {
             isModalOpen = true;
             setAttributes( { 
                 isModalOpen: isModalOpen
@@ -350,64 +291,6 @@ registerBlockType('tainacan/dynamic-terms-list', {
                     <InspectorControls>
                         
                         <PanelBody
-                                title={__('Collection header', 'tainacan')}
-                                initialOpen={ false }
-                            >
-                                <ToggleControl
-                                    label={__('Display header', 'tainacan')}
-                                    help={ !showCollectionHeader ? __('Toggle to show collection header', 'tainacan') : __('Do not show collection header', 'tainacan')}
-                                    checked={ showCollectionHeader }
-                                    onChange={ ( isChecked ) => {
-                                            showCollectionHeader = isChecked;
-                                            if (isChecked) fetchCollectionForHeader();
-                                            setAttributes({ showCollectionHeader: showCollectionHeader });
-                                        } 
-                                    }
-                                />
-                                { showCollectionHeader ?
-                                    <div style={{ margin: '6px' }}>
-
-                                        <ToggleControl
-                                            label={__('Display "Collection" label', 'tainacan')}
-                                            help={ !showCollectionLabel ? __('Toggle to show "Collection" label above header', 'tainacan') : __('Do not show "Collection" label', 'tainacan')}
-                                            checked={ showCollectionLabel }
-                                            onChange={ ( isChecked ) => {
-                                                    showCollectionLabel = isChecked;
-                                                    setAttributes({ showCollectionLabel: showCollectionLabel });
-                                                } 
-                                            }
-                                        />
-
-                                        <BaseControl
-                                            id="colorpicker"
-                                            label={ __('Background color', 'tainacan')}>
-                                            <ColorPicker
-                                                color={ collectionBackgroundColor }
-                                                onChangeComplete={ ( value ) => {
-                                                    collectionBackgroundColor = value.hex;
-                                                    setAttributes({ collectionBackgroundColor: collectionBackgroundColor }) 
-                                                }}
-                                                disableAlpha
-                                                />
-                                        </BaseControl>
-
-                                        <BaseControl
-                                            id="colorpallete"
-                                            label={ __('Collection name color', 'tainacan')}>
-                                            <ColorPalette 
-                                                colors={ [{ name: __('Black', 'tainacan'), color: '#000000'}, { name: __('White', 'tainacan'), color: '#ffffff'} ] } 
-                                                value={ collectionTextColor }
-                                                onChange={ ( color ) => {
-                                                    collectionTextColor = color;
-                                                    setAttributes({ collectionTextColor: collectionTextColor }) 
-                                                }} 
-                                            />
-                                        </BaseControl>
-                                    </div>
-                                : null
-                                }
-                        </PanelBody> 
-                        <PanelBody
                                 title={__('Search bar', 'tainacan')}
                                 initialOpen={ true }
                             >
@@ -423,16 +306,16 @@ registerBlockType('tainacan/dynamic-terms-list', {
                             />
                         </PanelBody>
                         <PanelBody
-                                title={__('Items', 'tainacan')}
+                                title={__('Terms', 'tainacan')}
                                 initialOpen={ true }
                             >
                             <div>
                                 <RangeControl
-                                    label={__('Maximum number of items', 'tainacan')}
-                                    value={ maxItemsNumber }
-                                    onChange={ ( aMaxItemsNumber ) => {
-                                        maxItemsNumber = aMaxItemsNumber;
-                                        setAttributes( { maxItemsNumber: aMaxItemsNumber } ) 
+                                    label={__('Maximum number of terms', 'tainacan')}
+                                    value={ maxTermsNumber }
+                                    onChange={ ( aMaxTermsNumber ) => {
+                                        maxTermsNumber = aMaxTermsNumber;
+                                        setAttributes( { maxTermsNumber: aMaxTermsNumber } ) 
                                         setContent();
                                     }}
                                     min={ 1 }
@@ -444,7 +327,7 @@ registerBlockType('tainacan/dynamic-terms-list', {
                                 { layout == 'list' ? 
                                     <ToggleControl
                                         label={__('Image', 'tainacan')}
-                                        help={ showImage ? __("Toggle to show item's image", 'tainacan') : __("Do not show item's image", 'tainacan')}
+                                        help={ showImage ? __("Toggle to show term's image", 'tainacan') : __("Do not show term's image", 'tainacan')}
                                         checked={ showImage }
                                         onChange={ ( isChecked ) => {
                                                 showImage = isChecked;
@@ -457,8 +340,8 @@ registerBlockType('tainacan/dynamic-terms-list', {
                                 { layout == 'grid' ?
                                     <div>
                                         <ToggleControl
-                                            label={__("Item's title", 'tainacan')}
-                                            help={ showName ? __("Toggle to show item's title", 'tainacan') : __("Do not show item's title", 'tainacan')}
+                                            label={__("Term's name", 'tainacan')}
+                                            help={ showName ? __("Toggle to show term's name", 'tainacan') : __("Do not show term's name", 'tainacan')}
                                             checked={ showName }
                                             onChange={ ( isChecked ) => {
                                                     showName = isChecked;
@@ -469,7 +352,7 @@ registerBlockType('tainacan/dynamic-terms-list', {
                                         />
                                         <div style={{ marginTop: '16px'}}>
                                             <RangeControl
-                                                label={__('Margin between items in pixels', 'tainacan')}
+                                                label={__('Margin between terms in pixels', 'tainacan')}
                                                 value={ gridMargin }
                                                 onChange={ ( margin ) => {
                                                     gridMargin = margin;
@@ -492,18 +375,12 @@ registerBlockType('tainacan/dynamic-terms-list', {
                     <div>
                         { isModalOpen ? 
                             <DynamicTermsModal
-                                existingCollectionId={ collectionId } 
-                                existingSearchURL={ searchURL } 
-                                onSelectCollection={ (selectedCollectionId) => {
-                                    collectionId = selectedCollectionId;
-                                    setAttributes({ collectionId: collectionId });
-                                    fetchCollectionForHeader();
-                                }}
-                                onApplySearchURL={ (aSearchURL) =>{
-                                    searchURL = aSearchURL
-                                    setAttributes({
-                                        searchURL: searchURL,
-                                        isModalOpen: false
+                                existingTaxonomyId={ taxonomyId }
+                                onSelectTaxonomy={ (selectedTaxonomyId) => {
+                                    taxonomyId = selectedTaxonomyId;
+                                    setAttributes({ 
+                                        taxonomyId: taxonomyId,
+                                        isModalOpen: false 
                                     });
                                     setContent();
                                 }}
@@ -511,7 +388,7 @@ registerBlockType('tainacan/dynamic-terms-list', {
                             : null
                         }
                         
-                        { items.length ? (
+                        { terms.length ? (
                             <div className="block-control">
                                 <p>
                                     <svg 
@@ -528,7 +405,7 @@ registerBlockType('tainacan/dynamic-terms-list', {
                                 <Button
                                     isPrimary
                                     type="submit"
-                                    onClick={ () => openDynamicItemsModal() }>
+                                    onClick={ () => openDynamicTermsModal() }>
                                     {__('Configure search', 'tainacan')}
                                 </Button>    
                             </div>
@@ -537,61 +414,10 @@ registerBlockType('tainacan/dynamic-terms-list', {
                     </div>
                     ) : null
                 }
-
-                {
-                    showCollectionHeader ?
-                
-                    <div> {
-                        isLoadingCollection ? 
-                            <div class="spinner-container">
-                                <Spinner />
-                            </div>
-                            :
-                            <a
-                                    href={ collection.url ? collection.url : '' }
-                                    target="_blank"
-                                    class="dynamic-items-collection-header">
-                                <div
-                                        style={{
-                                            backgroundColor: collectionBackgroundColor ? collectionBackgroundColor : '', 
-                                            paddingRight: collection && collection.thumbnail && (collection.thumbnail['tainacan-medium'] || collection.thumbnail['medium']) ? '' : '20px',
-                                            paddingTop: (!collection || !collection.thumbnail || (!collection.thumbnail['tainacan-medium'] && !collection.thumbnail['medium'])) ? '1rem' : '',
-                                            width: collection && collection.header_image ? '' : '100%'
-                                        }}
-                                        className={ 
-                                            'collection-name ' + 
-                                            ((!collection || !collection.thumbnail || (!collection.thumbnail['tainacan-medium'] && !collection.thumbnail['medium'])) && (!collection || !collection.header_image) ? 'only-collection-name' : '') 
-                                        }>
-                                    <h3 style={{  color: collectionTextColor ? collectionTextColor : '' }}>
-                                        { showCollectionLabel ? <span class="label">{ __('Collection', 'tainacan') }<br/></span> : null }
-                                        { collection && collection.name ? collection.name : '' }
-                                    </h3>
-                                </div>
-                                {
-                                    collection && collection.thumbnail && (collection.thumbnail['tainacan-medium'] || collection.thumbnail['medium']) ? 
-                                        <div   
-                                            class="collection-thumbnail"
-                                            style={{ 
-                                                backgroundImage: 'url(' + (collection.thumbnail['tainacan-medium'] != undefined ? (collection.thumbnail['tainacan-medium'][0]) : (collection.thumbnail['medium'][0])) + ')',
-                                            }}/>
-                                    : null
-                                }  
-                                <div
-                                        class="collection-header-image"
-                                        style={{
-                                            backgroundImage: collection.header_image ? 'url(' + collection.header_image + ')' : '',
-                                            minHeight: collection && collection.header_image ? '' : '80px',
-                                            display: !(collection && collection.thumbnail && (collection.thumbnail['tainacan-medium'] || collection.thumbnail['medium'])) ? collection && collection.header_image ? '' : 'none' : ''  
-                                        }}/>
-                            </a>  
-                        }
-                    </div>
-                    : null
-                }
-
+                   
                 {
                     showSearchBar ?
-                    <div class="dynamic-items-search-bar">
+                    <div class="dynamic-terms-search-bar">
                         <Button
                             onClick={ () => { order = 'asc'; setAttributes({ order: order }); setContent(); }}
                             className={order == 'asc' ? 'sorting-button-selected' : ''}
@@ -681,7 +507,7 @@ registerBlockType('tainacan/dynamic-terms-list', {
                 : null
                 }
 
-                { !items.length && !isLoading ? (
+                { !terms.length && !isLoading ? (
                     <Placeholder
                         icon={(
                             <img
@@ -690,20 +516,22 @@ registerBlockType('tainacan/dynamic-terms-list', {
                                 alt="Tainacan Logo"/>
                         )}>
                         <p>
-                        <svg
-                                xmlns="http://www.w3.org/2000/svg"
+                        <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
                                 viewBox="0 0 24 24"
                                 height="24px"
                                 width="24px">
-                            <path d="M14,2V4H7v7.24A5.33,5.33,0,0,0,5.5,11a4.07,4.07,0,0,0-.5,0V4A2,2,0,0,1,7,2Zm7,10v8a2,2,0,0,1-2,2H12l1-1-2.41-2.41A5.56,5.56,0,0,0,11,16.53a5.48,5.48,0,0,0-2-4.24V8a2,2,0,0,1,2-2h4Zm-2.52,0L14,7.5V12ZM11,21l-1,1L8.86,20.89,8,20H8l-.57-.57A3.42,3.42,0,0,1,5.5,20a3.5,3.5,0,0,1-.5-7,2.74,2.74,0,0,1,.5,0,3.41,3.41,0,0,1,1.5.34,3.5,3.5,0,0,1,2,3.16,3.42,3.42,0,0,1-.58,1.92L9,19H9l.85.85Zm-4-4.5A1.5,1.5,0,0,0,5.5,15a1.39,1.39,0,0,0-.5.09A1.5,1.5,0,0,0,5.5,18a1.48,1.48,0,0,0,1.42-1A1.5,1.5,0,0,0,7,16.53Z"/>
+                            <path 
+                                    fill="#298596"
+                                    d="M21.43,13.64,19.32,16a2.57,2.57,0,0,1-2,1H11a3.91,3.91,0,0,0,0-.49,5.49,5.49,0,0,0-5-5.47V9.64A2.59,2.59,0,0,1,8.59,7H17.3a2.57,2.57,0,0,1,2,1l2.11,2.38A2.59,2.59,0,0,1,21.43,13.64ZM4,3A2,2,0,0,0,2,5v7.3a5.32,5.32,0,0,1,2-1V5H16V3ZM11,21l-1,1L8.86,20.89,8,20H8l-.57-.57A3.42,3.42,0,0,1,5.5,20a3.5,3.5,0,0,1,0-7,2.74,2.74,0,0,1,.5,0A3.5,3.5,0,0,1,9,16a2.92,2.92,0,0,1,0,.51,3.42,3.42,0,0,1-.58,1.92L9,19H9l.85.85Zm-4-4.5A1.5,1.5,0,1,0,5.5,18,1.5,1.5,0,0,0,7,16.53Z"/>
                         </svg>
-                            {__('Dynamically list items from a Tainacan items search', 'tainacan')}
+                            {__('Dynamically list terms from a Tainacan terms search', 'tainacan')}
                         </p>
                         <Button
                             isPrimary
                             type="submit"
-                            onClick={ () => openDynamicItemsModal() }>
-                            {__('Select items', 'tainacan')}
+                            onClick={ () => openDynamicTermsModal() }>
+                            {__('Select terms', 'tainacan')}
                         </Button>   
                     </Placeholder>
                     ) : null
@@ -716,11 +544,10 @@ registerBlockType('tainacan/dynamic-terms-list', {
                     <div>
                         <ul 
                             style={{ 
-                                gridTemplateColumns: layout == 'grid' ? 'repeat(auto-fill, ' +  (gridMargin + (showName ? 220 : 185)) + 'px)' : 'inherit', 
-                                marginTop: showSearchBar || showCollectionHeader ? '1.5rem' : '0px'
+                                gridTemplateColumns: layout == 'grid' ? 'repeat(auto-fill, ' +  (gridMargin + (showName ? 220 : 185)) + 'px)' : 'inherit'
                             }}
-                            className={'items-list-edit items-layout-' + layout + (!showName ? ' items-list-without-margin' : '')}>
-                            { items }
+                            className={'terms-list-edit terms-layout-' + layout + (!showName ? ' terms-list-without-margin' : '')}>
+                            { terms }
                         </ul>
                     </div>
                 }
@@ -731,39 +558,29 @@ registerBlockType('tainacan/dynamic-terms-list', {
         const {
             content, 
             blockId,
-            collectionId,  
+            taxonomyId,  
             showImage,
             showName,
             layout,
             gridMargin,
-            searchURL,
-            maxItemsNumber,
+            maxTermsNumber,
             order,
-            showSearchBar,
-            showCollectionHeader,
-            showCollectionLabel,
-            collectionBackgroundColor,
-            collectionTextColor
+            showSearchBar
         } = attributes;
         
         return <div 
-                    search-url={ searchURL }
                     className={ className }
-                    collection-id={ collectionId }  
+                    taxonomy-id={ taxonomyId }  
                     show-image={ '' + showImage }
                     show-name={ '' + showName }
                     show-search-bar={ '' + showSearchBar }
-                    show-collection-header={ '' + showCollectionHeader }
-                    show-collection-label={ '' + showCollectionLabel }
                     layout={ layout }
-                    collection-background-color={ collectionBackgroundColor }
-                    collection-text-color={ collectionTextColor }
                     grid-margin={ gridMargin }
-                    max-items-number={ maxItemsNumber }
+                    max-terms-number={ maxTermsNumber }
                     order={ order }
                     tainacan-api-root={ tainacan_plugin.root }
                     tainacan-base-url={ tainacan_plugin.base_url }
-                    id={ 'wp-block-tainacan-dynamic-items-list_' + blockId }>
+                    id={ 'wp-block-tainacan-dynamic-terms-list_' + blockId }>
                         { content }
                 </div>
     }

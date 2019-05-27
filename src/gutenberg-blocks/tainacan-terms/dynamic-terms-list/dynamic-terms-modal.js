@@ -11,264 +11,231 @@ export default class DynamicTermsModal extends React.Component {
 
         // Initialize state
         this.state = {
-            collectionsPerPage: 24,
-            collectionId: undefined,  
-            collectionName: '', 
-            isLoadingCollections: false, 
-            modalCollections: [],
-            totalModalCollections: 0, 
-            collectionPage: 1,
-            temporaryCollectionId: '',
-            searchCollectionName: '',
-            collections: [],
-            collectionsRequestSource: undefined,
-            searchURL: '',
+            taxonomiesPerPage: 24,
+            taxonomyId: undefined,  
+            taxonomyName: '', 
+            isLoadingTaxonomies: false, 
+            modalTaxonomies: [],
+            totalModalTaxonomies: 0, 
+            taxonomyPage: 1,
+            temporaryTaxonomyId: '',
+            searchTaxonomyName: '',
+            taxonomies: [],
+            taxonomiesRequestSource: undefined
         };
         
         // Bind events
-        this.resetCollections = this.resetCollections.bind(this);
-        this.selectCollection = this.selectCollection.bind(this);
-        this.fetchCollections = this.fetchCollections.bind(this);
-        this.fetchModalCollections = this.fetchModalCollections.bind(this);
-        this.fetchCollection = this.fetchCollection.bind(this);
-        this.applySelectedSearchURL = this.applySelectedSearchURL.bind(this);
+        this.resetTaxonomies = this.resetTaxonomies.bind(this);
+        this.selectTaxonomy = this.selectTaxonomy.bind(this);
+        this.fetchTaxonomies = this.fetchTaxonomies.bind(this);
+        this.fetchModalTaxonomies = this.fetchModalTaxonomies.bind(this);
+        this.fetchTaxonomy = this.fetchTaxonomy.bind(this);
     }
 
     componentWillMount() {
         
         this.setState({ 
-            collectionId: this.props.existingCollectionId
+            taxonomyId: this.props.existingTaxonomyId,
+            taxonomyPage: 1 
         });
-         
-        if (this.props.existingCollectionId != null && this.props.existingCollectionId != undefined) {
-            this.fetchCollection(this.props.existingCollectionId);
-            this.setState({ searchURL: this.props.existingSearchURL ? this.props.existingSearchURL : tainacan_plugin.admin_url + 'admin.php?page=tainacan_admin#/collections/'+ this.props.existingCollectionId + '/items/?readmode=true&iframemode=true' });
-        } else {
-            this.setState({ collectionPage: 1 });
-            this.fetchModalCollections();
-        }
+        
+        this.fetchModalTaxonomies();
     }
 
-    // COLLECTIONS RELATED --------------------------------------------------
-    fetchModalCollections() {
+    // TAXONOMIES RELATED --------------------------------------------------
+    fetchModalTaxonomies() {
 
-        let someModalCollections = this.state.modalCollections;
-        if (this.state.collectionPage <= 1)
-            someModalCollections = [];
+        let someModalTaxonomies = this.state.modalTaxonomies;
+        if (this.state.taxonomyPage <= 1)
+            someModalTaxonomies = [];
 
-        let endpoint = '/collections/?orderby=title&order=asc&perpage=' + this.state.collectionsPerPage + '&paged=' + this.state.collectionPage;
+        let endpoint = '/taxonomies/?orderby=title&order=asc&perpage=' + this.state.taxonomiesPerPage + '&paged=' + this.state.taxonomyPage;
 
         this.setState({ 
-            isLoadingCollections: true,
-            collectionPage: this.state.collectionPage + 1, 
-            modalCollections: someModalCollections
+            isLoadingTaxonomies: true,
+            taxonomyPage: this.state.taxonomyPage + 1, 
+            modalTaxonomies: someModalTaxonomies
         });
 
         tainacan.get(endpoint)
             .then(response => {
 
-                let otherModalCollections = this.state.modalCollections;
-                for (let collection of response.data) {
-                    otherModalCollections.push({ 
-                        name: collection.name, 
-                        id: collection.id
+                let otherModalTaxonomies = this.state.modalTaxonomies;
+                for (let taxonomy of response.data) {
+                    otherModalTaxonomies.push({ 
+                        name: taxonomy.name, 
+                        id: taxonomy.id
                     });
                 }
 
                 this.setState({ 
-                    isLoadingCollections: false, 
-                    modalCollections: otherModalCollections,
-                    totalModalCollections: response.headers['x-wp-total']
+                    isLoadingTaxonomies: false, 
+                    modalTaxonomies: otherModalTaxonomies,
+                    totalModalTaxonomies: response.headers['x-wp-total']
                 });
             
-                return otherModalCollections;
+                return otherModalTaxonomies;
             })
             .catch(error => {
-                console.log('Error trying to fetch collections: ' + error);
+                console.log('Error trying to fetch taxonomies: ' + error);
             });
     }
 
-    fetchCollection(collectionId) {
-        tainacan.get('/collections/' + collectionId)
+    fetchTaxonomy(taxonomyId) {
+        tainacan.get('/taxonomies/' + taxonomyId)
             .then((response) => {
-                this.setState({ collectionName: response.data.name });
+                this.setState({ taxonomyName: response.data.name });
             }).catch(error => {
-                console.log('Error trying to fetch collection: ' + error);
+                console.log('Error trying to fetch taxonomy: ' + error);
             });
     }
 
-    selectCollection(selectedCollectionId) {
+    selectTaxonomy(selectedTaxonomyId) {
         this.setState({
-            collectionId: selectedCollectionId,
-            searchURL: tainacan_plugin.admin_url + 'admin.php?page=tainacan_admin#/collections/' + selectedCollectionId + '/items/?readmode=true&iframemode=true'
+            taxonomyId: selectedTaxonomyId
         });
 
-        this.props.onSelectCollection(selectedCollectionId);
-        this.fetchCollection(selectedCollectionId);
+        this.props.onSelectTaxonomy(selectedTaxonomyId);
     }
 
-    fetchCollections(name) {
+    fetchTaxonomies(name) {
 
-        if (this.state.collectionsRequestSource != undefined)
-            this.state.collectionsRequestSource.cancel('Previous collections search canceled.');
+        if (this.state.taxonomiesRequestSource != undefined)
+            this.state.taxonomiesRequestSource.cancel('Previous taxonomies search canceled.');
 
-        let aCollectionRequestSource = axios.CancelToken.source();
+        let aTaxonomyRequestSource = axios.CancelToken.source();
 
         this.setState({ 
-            collectionsRequestSource: aCollectionRequestSource,
-            isLoadingCollections: true, 
-            collections: [],
-            items: []
+            taxonomiesRequestSource: aTaxonomyRequestSource,
+            isLoadingTaxonomies: true, 
+            taxonomies: []
         });
 
-        let endpoint = '/collections/?orderby=title&order=asc&perpage=' + this.state.collectionsPerPage;
+        let endpoint = '/taxonomies/?orderby=title&order=asc&perpage=' + this.state.taxonomiesPerPage;
         if (name != undefined && name != '')
             endpoint += '&search=' + name;
 
-        tainacan.get(endpoint, { cancelToken: aCollectionRequestSource.token })
+        tainacan.get(endpoint, { cancelToken: aTaxonomyRequestSource.token })
             .then(response => {
-                let someCollections = response.data.map((collection) => ({ name: collection.name, id: collection.id + '' }));
+                let someTaxonomies = response.data.map((taxonomy) => ({ name: taxonomy.name, id: taxonomy.id + '' }));
 
                 this.setState({ 
-                    isLoadingCollections: false, 
-                    collections: someCollections
+                    isLoadingTaxonomies: false, 
+                    taxonomies: someTaxonomies
                 });
                 
-                return someCollections;
+                return someTaxonomies;
             })
             .catch(error => {
-                console.log('Error trying to fetch collections: ' + error);
+                console.log('Error trying to fetch taxonomies: ' + error);
             });
     }
 
     applySelectedSearchURL() {    
-        this.props.onApplySearchURL(document.getElementById("itemsFrame").contentWindow.location.href);
+        this.props.onApplySearchURL(document.getElementById("termsFrame").contentWindow.location.href);
     }
 
-    resetCollections() {
+    resetTaxonomies() {
 
         this.setState({
-            collectionId: null,
-            collectionPage: 1,
-            modalCollections: []
+            taxonomyId: null,
+            taxonomyPage: 1,
+            modalTaxonomies: []
         });
-        this.fetchModalCollections(); 
+        this.fetchModalTaxonomies(); 
     }
 
     cancelSelection() {
 
         this.setState({
-            modalCollections: []
+            modalTaxonomies: []
         });
 
         this.props.onCancelSelection();
     }
 
     render() {
-        return this.state.collectionId != null && this.state.collectionId != undefined ? (
-            // Items modal
-        <Modal
-                className="wp-block-tainacan-modal dynamic-modal"
-                title={__('Configure the items search to be used on block', 'tainacan')}
-                onRequestClose={ () => this.cancelSelection() }
-                contentLabel={__('Configure your items search to be shown on block', 'tainacan')}>
-                <iframe
-                        id="itemsFrame"
-                        src={ this.state.searchURL } />
-                <div className="modal-footer-area">
-                    <Button 
-                        isDefault
-                        onClick={ () => { this.resetCollections() }}>
-                        {__('Switch collection', 'tainacan')}
-                    </Button>
-                    <Button 
-                        isPrimary
-                        onClick={ () => this.applySelectedSearchURL() }>
-                        {__('Use this search', 'tainacan')}
-                    </Button>
-                </div>
-        </Modal>
-    ) : (
-        // Collections modal
+        return (
+        // Taxonomies modal
         <Modal
                 className="wp-block-tainacan-modal"
-                title={__('Select a collection to fetch items from', 'tainacan')}
+                title={__('Select a taxonomy to fetch terms from', 'tainacan')}
                 onRequestClose={ () => this.cancelSelection() }
-                contentLabel={__('Select items', 'tainacan')}>
+                contentLabel={__('Select terms', 'tainacan')}>
                 <div>
                     <div className="modal-search-area">
                         <TextControl 
-                                label={__('Search for a collection', 'tainacan')}
-                                value={ this.state.searchCollectionName }
+                                label={__('Search for a taxonomy', 'tainacan')}
+                                value={ this.state.searchTaxonomyName }
                                 onChange={(value) => {
                                     this.setState({ 
-                                        searchCollectionName: value
+                                        searchTaxonomyName: value
                                     });
-                                    _.debounce(this.fetchCollections(value), 300);
+                                    _.debounce(this.fetchTaxonomies(value), 300);
                                 }}/>
                     </div>
                     {(
-                    this.state.searchCollectionName != '' ? (
-                        this.state.collections.length > 0 ?
+                    this.state.searchTaxonomyName != '' ? (
+                        this.state.taxonomies.length > 0 ?
                         (
                             <div>
                                 <div className="modal-radio-list">
                                     {
                                     <RadioControl
-                                        selected={ this.state.temporaryCollectionId }
+                                        selected={ this.state.temporaryTaxonomyId }
                                         options={
-                                            this.state.collections.map((collection) => {
-                                                return { label: collection.name, value: '' + collection.id }
+                                            this.state.taxonomies.map((taxonomy) => {
+                                                return { label: taxonomy.name, value: '' + taxonomy.id }
                                             })
                                         }
-                                        onChange={ ( aCollectionId ) => { 
-                                            this.setState({ temporaryCollectionId: aCollectionId });
+                                        onChange={ ( aTaxonomyId ) => { 
+                                            this.setState({ temporaryTaxonomyId: aTaxonomyId });
                                         } } />
                                     }                                      
                                 </div>
                             </div>
                         ) :
-                        this.state.isLoadingCollections ? (
+                        this.state.isLoadingTaxonomies ? (
                             <Spinner />
                         ) :
                         <div className="modal-loadmore-section">
-                            <p>{ __('Sorry, no collection found.', 'tainacan') }</p>
+                            <p>{ __('Sorry, no taxonomy found.', 'tainacan') }</p>
                         </div> 
                     ):
-                    this.state.modalCollections.length > 0 ? 
+                    this.state.modalTaxonomies.length > 0 ? 
                     (   
                         <div>
                             <div className="modal-radio-list">
                                 {
                                 <RadioControl
-                                    selected={ this.state.temporaryCollectionId }
+                                    selected={ this.state.temporaryTaxonomyId }
                                     options={
-                                        this.state.modalCollections.map((collection) => {
-                                            return { label: collection.name, value: '' + collection.id }
+                                        this.state.modalTaxonomies.map((taxonomy) => {
+                                            return { label: taxonomy.name, value: '' + taxonomy.id }
                                         })
                                     }
-                                    onChange={ ( aCollectionId ) => { 
-                                        this.setState({ temporaryCollectionId: aCollectionId });
+                                    onChange={ ( aTaxonomyId ) => { 
+                                        this.setState({ temporaryTaxonomyId: aTaxonomyId });
                                     } } />
                                 }                                     
                             </div>
                             <div className="modal-loadmore-section">
-                                <p>{ __('Showing', 'tainacan') + " " + this.state.modalCollections.length + " " + __('of', 'tainacan') + " " + this.state.totalModalCollections + " " + __('collections', 'tainacan') + "."}</p>
+                                <p>{ __('Showing', 'tainacan') + " " + this.state.modalTaxonomies.length + " " + __('of', 'tainacan') + " " + this.state.totalModalTaxonomies + " " + __('taxonomies', 'tainacan') + "."}</p>
                                 {
-                                    this.state.modalCollections.length < this.state.totalModalCollections ? (
+                                    this.state.modalTaxonomies.length < this.state.totalModalTaxonomies ? (
                                     <Button 
                                         isDefault
                                         isSmall
-                                        onClick={ () => this.fetchModalCollections() }>
+                                        onClick={ () => this.fetchModalTaxonomies() }>
                                         {__('Load more', 'tainacan')}
                                     </Button>
                                     ) : null
                                 }
                             </div>
                         </div>
-                    ) : this.state.isLoadingCollections ? <Spinner/> :
+                    ) : this.state.isLoadingTaxonomies ? <Spinner/> :
                     <div className="modal-loadmore-section">
-                        <p>{ __('Sorry, no collection found.', 'tainacan') }</p>
+                        <p>{ __('Sorry, no taxonomy found.', 'tainacan') }</p>
                     </div>
                 )}
                 <div className="modal-footer-area">
@@ -279,8 +246,8 @@ export default class DynamicTermsModal extends React.Component {
                     </Button>
                     <Button
                         isPrimary
-                        disabled={ this.state.temporaryCollectionId == undefined || this.state.temporaryCollectionId == null || this.state.temporaryCollectionId == ''}
-                        onClick={ () => { this.selectCollection(this.state.temporaryCollectionId);  } }>
+                        disabled={ this.state.temporaryTaxonomyId == undefined || this.state.temporaryTaxonomyId == null || this.state.temporaryTaxonomyId == ''}
+                        onClick={ () => { this.selectTaxonomy(this.state.temporaryTaxonomyId);  } }>
                         {__('Configure search', 'tainacan')}
                     </Button>
                 </div>

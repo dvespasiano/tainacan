@@ -45,7 +45,7 @@
     }
 
     // Collection header
-    .dynamic-items-collection-header {
+    .dynamic-terms-collection-header {
         display: flex;
         width: 100%;
         align-items: stretch;
@@ -135,7 +135,7 @@
     }
 
     // Search control bar
-    .dynamic-items-search-bar {
+    .dynamic-terms-search-bar {
         width: 100%;
         display: flex;
         align-items: center;
@@ -216,8 +216,8 @@
     }
 
     // Grid View Mode ----------------------------------------------------
-    ul.items-list.items-list-without-margin,
-    ul.items-list-edit.items-list-without-margin {
+    ul.terms-list.terms-list-without-margin,
+    ul.terms-list-edit.terms-list-without-margin {
         grid-template-columns: repeat(auto-fill, 185px);
         justify-content: center !important;
         grid-template-rows: auto !important;
@@ -235,8 +235,8 @@
             }
         }
     }
-    ul.items-list.items-layout-grid,
-    ul.items-list-edit.items-layout-grid {
+    ul.terms-list.terms-layout-grid,
+    ul.terms-list-edit.terms-layout-grid {
         padding: 0;
         display: -ms-grid;
         display: grid;
@@ -245,7 +245,7 @@
         justify-content: space-evenly;
         list-style-type: none;
 
-        li.item-list-item {
+        li.term-list-item {
             position: relative;
             display: block;
             margin: 12px 12px 24px 12px;
@@ -266,7 +266,7 @@
                 margin-bottom: 0.5rem;
             }
 
-            a.item-without-title span {
+            a.term-without-name span {
                 display: none;
             }
 
@@ -276,7 +276,7 @@
             }
         }
     }
-    ul.items-list-edit li.item-list-item {
+    ul.terms-list-edit li.term-list-item {
         display: flex;
         align-items: flex-start;
 
@@ -313,11 +313,11 @@
     }
     @media only screen and (max-width: 498px) { 
         
-        ul.items-list.items-layout-grid,
-        ul.items-list-edit.items-layout-grid {
+        ul.terms-list.terms-layout-grid,
+        ul.terms-list-edit.terms-layout-grid {
             grid-template-columns: repeat(auto-fill, 100%);
 
-            li.item-list-item { 
+            li.term-list-item { 
                 width: 100%;
                 img { width: 100%; }
             }
@@ -325,13 +325,13 @@
     }
 
     // List View Mode ----------------------------------------------------
-    ul.items-list.items-layout-list,
-    ul.items-list-edit.items-layout-list {
+    ul.terms-list.terms-layout-list,
+    ul.terms-list-edit.terms-layout-list {
         padding: 0;
         display: block;
         list-style-type: none;
 
-        li.item-list-item {
+        li.term-list-item {
             position: relative;
             display: inline-block;
             margin: 12px 12px 24px 12px;
@@ -358,7 +358,7 @@
                 margin-right: 20px;
             }
 
-            a.item-without-image img {
+            a.term-without-image img {
                 display: none;
             }
 
