@@ -14,6 +14,7 @@ function tainacan_blocks_initialize() {
 
 function tainacan_blocks_add_gutenberg_blocks_actions() {
 	add_action('init', 'tainacan_blocks_register_tainacan_terms_list');
+	add_action('init', 'tainacan_blocks_register_tainacan_dynamic_terms_list');
 	add_action('init', 'tainacan_blocks_register_tainacan_items_list');
 	add_action('init', 'tainacan_blocks_register_tainacan_dynamic_items_list');
 	add_action('init', 'tainacan_blocks_register_tainacan_collections_list');
@@ -55,6 +56,36 @@ function tainacan_blocks_register_tainacan_terms_list(){
 		register_block_type( 'tainacan/terms-list', array(
 			'editor_script' => 'terms-list',
 			'style'         => 'terms-list'
+		) );
+	}
+}
+
+function tainacan_blocks_register_tainacan_dynamic_terms_list(){
+	global $TAINACAN_BASE_URL;
+
+	wp_enqueue_script(
+		'dynamic-items-terms-theme',
+		$TAINACAN_BASE_URL . '/assets/gutenberg_dynamic_terms_list_theme-components.js',
+		array('wp-components')
+	);
+
+	wp_register_script(
+		'dynamic-terms-list',
+		$TAINACAN_BASE_URL . '/assets/gutenberg_dynamic_terms_list-components.js',
+		array('wp-blocks', 'wp-element', 'wp-components', 'wp-editor')
+	);
+
+	wp_register_style(
+		'dynamic-terms-list',
+		$TAINACAN_BASE_URL . '/assets/css/tainacan-gutenberg-block-dynamic-terms-list.css',
+		array('wp-edit-blocks')
+	);
+
+	if (function_exists('register_block_type')) {
+		register_block_type( 'tainacan/dynamic-terms-list', array(
+			'editor_script' => 'dynamic-terms-list',
+			'style'         => 'dynamic-terms-list',
+			'script'		=> 'dynamic-terms-list-theme'
 		) );
 	}
 }
@@ -153,6 +184,7 @@ function tainacan_blocks_add_plugin_settings() {
 	$settings = tainacan_blocks_get_plugin_js_settings();
 
 	wp_localize_script( 'terms-list', 'tainacan_plugin', $settings );
+	wp_localize_script( 'dynamic-terms-list', 'tainacan_plugin', $settings );
 	wp_localize_script( 'items-list', 'tainacan_plugin', $settings );
 	wp_localize_script( 'dynamic-items-list', 'tainacan_plugin', $settings );
 	wp_localize_script( 'collections-list', 'tainacan_plugin', $settings );

@@ -6,25 +6,25 @@ const { RangeControl, Spinner, Button, ToggleControl, Tooltip, Placeholder, Tool
 
 const { InspectorControls, BlockControls } = wp.editor;
 
-import DynamicItemsModal from './dynamic-items-modal.js';
+import DynamicTermsModal from './dynamic-terms-modal.js';
 import tainacan from '../../api-client/axios.js';
 import axios from 'axios';
 import qs from 'qs';
 
-registerBlockType('tainacan/dynamic-items-list', {
-    title: __('Tainacan Collection\'s items List', 'tainacan'),
+registerBlockType('tainacan/dynamic-terms-list', {
+    title: __('Tainacan Taxonomy\'s terms List', 'tainacan'),
     icon:
-        <svg
-                xmlns="http://www.w3.org/2000/svg"
+        <svg 
+                xmlns="http://www.w3.org/2000/svg" 
                 viewBox="0 0 24 24"
                 height="24px"
                 width="24px">
-            <path
+            <path 
                     fill="#298596"
-                    d="M14,2V4H7v7.24A5.33,5.33,0,0,0,5.5,11a4.07,4.07,0,0,0-.5,0V4A2,2,0,0,1,7,2Zm7,10v8a2,2,0,0,1-2,2H12l1-1-2.41-2.41A5.56,5.56,0,0,0,11,16.53a5.48,5.48,0,0,0-2-4.24V8a2,2,0,0,1,2-2h4Zm-2.52,0L14,7.5V12ZM11,21l-1,1L8.86,20.89,8,20H8l-.57-.57A3.42,3.42,0,0,1,5.5,20a3.5,3.5,0,0,1-.5-7,2.74,2.74,0,0,1,.5,0,3.41,3.41,0,0,1,1.5.34,3.5,3.5,0,0,1,2,3.16,3.42,3.42,0,0,1-.58,1.92L9,19H9l.85.85Zm-4-4.5A1.5,1.5,0,0,0,5.5,15a1.39,1.39,0,0,0-.5.09A1.5,1.5,0,0,0,5.5,18a1.48,1.48,0,0,0,1.42-1A1.5,1.5,0,0,0,7,16.53Z"/>
+                    d="M21.43,13.64,19.32,16a2.57,2.57,0,0,1-2,1H11a3.91,3.91,0,0,0,0-.49,5.49,5.49,0,0,0-5-5.47V9.64A2.59,2.59,0,0,1,8.59,7H17.3a2.57,2.57,0,0,1,2,1l2.11,2.38A2.59,2.59,0,0,1,21.43,13.64ZM4,3A2,2,0,0,0,2,5v7.3a5.32,5.32,0,0,1,2-1V5H16V3ZM11,21l-1,1L8.86,20.89,8,20H8l-.57-.57A3.42,3.42,0,0,1,5.5,20a3.5,3.5,0,0,1,0-7,2.74,2.74,0,0,1,.5,0A3.5,3.5,0,0,1,9,16a2.92,2.92,0,0,1,0,.51,3.42,3.42,0,0,1-.58,1.92L9,19H9l.85.85Zm-4-4.5A1.5,1.5,0,1,0,5.5,18,1.5,1.5,0,0,0,7,16.53Z"/>
         </svg>,
     category: 'tainacan-blocks',
-    keywords: [ __( 'items', 'tainacan' ), __( 'search', 'tainacan' ), __( 'collection', 'tainacan' ) ],
+    keywords: [ __( 'terms', 'tainacan' ), __( 'search', 'tainacan' ), __( 'taxonomy', 'tainacan' ) ],
     attributes: {
         content: {
             type: 'array',
@@ -491,7 +491,7 @@ registerBlockType('tainacan/dynamic-items-list', {
                     (
                     <div>
                         { isModalOpen ? 
-                            <DynamicItemsModal
+                            <DynamicTermsModal
                                 existingCollectionId={ collectionId } 
                                 existingSearchURL={ searchURL } 
                                 onSelectCollection={ (selectedCollectionId) => {
@@ -514,14 +514,16 @@ registerBlockType('tainacan/dynamic-items-list', {
                         { items.length ? (
                             <div className="block-control">
                                 <p>
-                                    <svg
-                                            xmlns="http://www.w3.org/2000/svg"
+                                    <svg 
+                                            xmlns="http://www.w3.org/2000/svg" 
                                             viewBox="0 0 24 24"
                                             height="24px"
                                             width="24px">
-                                        <path d="M14,2V4H7v7.24A5.33,5.33,0,0,0,5.5,11a4.07,4.07,0,0,0-.5,0V4A2,2,0,0,1,7,2Zm7,10v8a2,2,0,0,1-2,2H12l1-1-2.41-2.41A5.56,5.56,0,0,0,11,16.53a5.48,5.48,0,0,0-2-4.24V8a2,2,0,0,1,2-2h4Zm-2.52,0L14,7.5V12ZM11,21l-1,1L8.86,20.89,8,20H8l-.57-.57A3.42,3.42,0,0,1,5.5,20a3.5,3.5,0,0,1-.5-7,2.74,2.74,0,0,1,.5,0,3.41,3.41,0,0,1,1.5.34,3.5,3.5,0,0,1,2,3.16,3.42,3.42,0,0,1-.58,1.92L9,19H9l.85.85Zm-4-4.5A1.5,1.5,0,0,0,5.5,15a1.39,1.39,0,0,0-.5.09A1.5,1.5,0,0,0,5.5,18a1.48,1.48,0,0,0,1.42-1A1.5,1.5,0,0,0,7,16.53Z"/>
+                                        <path 
+                                                fill="#298596"
+                                                d="M21.43,13.64,19.32,16a2.57,2.57,0,0,1-2,1H11a3.91,3.91,0,0,0,0-.49,5.49,5.49,0,0,0-5-5.47V9.64A2.59,2.59,0,0,1,8.59,7H17.3a2.57,2.57,0,0,1,2,1l2.11,2.38A2.59,2.59,0,0,1,21.43,13.64ZM4,3A2,2,0,0,0,2,5v7.3a5.32,5.32,0,0,1,2-1V5H16V3ZM11,21l-1,1L8.86,20.89,8,20H8l-.57-.57A3.42,3.42,0,0,1,5.5,20a3.5,3.5,0,0,1,0-7,2.74,2.74,0,0,1,.5,0A3.5,3.5,0,0,1,9,16a2.92,2.92,0,0,1,0,.51,3.42,3.42,0,0,1-.58,1.92L9,19H9l.85.85Zm-4-4.5A1.5,1.5,0,1,0,5.5,18,1.5,1.5,0,0,0,7,16.53Z"/>
                                     </svg>
-                                    {__('Dynamically list items from a Tainacan items search', 'tainacan')}
+                                    {__('Dynamically list terms from a Tainacan terms search', 'tainacan')}
                                 </p>
                                 <Button
                                     isPrimary
