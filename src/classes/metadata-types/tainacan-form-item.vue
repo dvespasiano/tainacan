@@ -42,7 +42,8 @@
                         :is="metadatum.metadatum.metadata_type_object.component"
                         v-model="inputs[0]" 
                         :metadatum="metadatum"
-                        @input="emitIsChangingValue()"/>
+                        @input="emitIsChangingValue()"
+                        @blur="changeValue()"/>
                 <div v-if="metadatum.metadatum.multiple == 'yes'">
                     <div 
                             v-if="index > 0" 
@@ -54,7 +55,8 @@
                                 :is="metadatum.metadatum.metadata_type_object.component"
                                 v-model="inputs[index]" 
                                 :metadatum="metadatum"
-                                @input="emitIsChangingValue()"/>
+                                @input="emitIsChangingValue()"
+                                @blur="changeValue()"/>
                             <a 
                                     v-if="index > 0" 
                                     @click="removeInput(index)"
@@ -86,7 +88,8 @@
                         :is="metadatum.metadatum.metadata_type_object.component"
                         v-model="inputs"
                         :metadatum="metadatum"
-                        @input="emitIsChangingValue()"/>
+                        @input="emitIsChangingValue()"
+                        @blur="changeValue()"/>
             </div>
         </transition>
     </b-field>
@@ -137,10 +140,10 @@
             this.getValue();
         },
         methods: {
-            emitIsChangingValue() {
+            emitIsChangingValue:  _.debounce(function() {
                 this.changeValue();
-            },
-            changeValue: _.debounce(function() {
+            }, 1000),
+            changeValue() {
                 
                 if(this.metadatum.value != this.inputs){
 
@@ -193,7 +196,7 @@
 
                     eventBus.$emit('input', { item_id: this.metadatum.item.id, metadatum_id: this.metadatum.metadatum.id, values: this.inputs } );
                 }
-            }, 1000),
+            },
             getValue(){ 
                 if (this.metadatum.value instanceof Array) {
                     this.inputs = this.metadatum.value.slice(0);
