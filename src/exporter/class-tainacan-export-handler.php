@@ -20,14 +20,23 @@ class Export_Handler {
 			'class_name' => '\Tainacan\Exporter\CSV'
 		]);
 
-        $this->register_exporter([
-            'name' => 'Vocabulary CSV',
-            'description' => __('Allows you to export a taxonomy to a CSV file', 'tainacan'),
-            'slug' => 'vocabularycsv',
-            'class_name' => '\Tainacan\Exporter\Term_Exporter',
-            'manual_mapping' => false,
-            'manual_collection' => false
-        ]);
+		$this->register_exporter([
+				'name' => 'Vocabulary CSV',
+				'description' => __('Allows you to export a taxonomy to a CSV file', 'tainacan'),
+				'slug' => 'vocabularycsv',
+				'class_name' => '\Tainacan\Exporter\Term_Exporter',
+				'manual_mapping' => false,
+				'manual_collection' => false
+		]);
+
+		$this->register_exporter([
+			'name' => 'Package Tainacan',
+			'description' => __('Allows you to export all data in one package', 'tainacan'),
+			'slug' => 'packagetainacan',
+			'class_name' => '\Tainacan\Exporter\Package_Exporter',
+			'manual_mapping' => false,
+			'manual_collection' => false
+	]);
 		
 		do_action('tainacan_register_exporters');
 
