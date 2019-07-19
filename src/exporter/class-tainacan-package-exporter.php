@@ -32,14 +32,36 @@ class Package_Exporter extends Exporter {
 
 	protected $steps = [
 		[
+			'name' => 'Check structure',
+			'progress_label' => 'Exporting checking structure',
+			'callback' => 'checkStructure'
+		],
+		[
 			'name' => 'Taxonomies',
-			'progress_label' => 'Exporting taxonomies/terms',
-			'callback' => 'exporting_taxonomies'
+			'progress_label' => 'Exporting taxonomies',
+			'callback' => 'exportingTaxonomies'
+		],
+		[
+			'name' => 'Terms',
+			'progress_label' => 'Exporting terms',
+			'callback' => 'exportingTerms'
+		],
+		[
+			'name' => 'compress package',
+			'progress_label' => 'Exporting compressing package',
+			'callback' => 'compressPackage'
 		]
+		
 	];
 
 	public function __construct($attributes = array()){
 		parent::__construct($attributes);
+
+		$upload_dir = trailingslashit( wp_upload_dir()['basedir'] );
+		$exporter_folder = 'tainacan/exporter';
+		$package_folder = "/package";
+		$this->final_folder = $upload_dir . $exporter_folder . $package_folder;
+
 		$this->set_default_options([]);
 	}
 
@@ -63,61 +85,61 @@ class Package_Exporter extends Exporter {
 			return true;
 	}
 
-	/**
-	 * 
-	 */
-	public function exporting_taxonomies() {
+	public function checkStructure() {
+		if (!is_dir($this->final_folder)) {
+			if (!mkdir($this->final_folder, 0777, true)) {
+				$this->add_error_log( 'Erro on create the folder: ' . $this->final_folder);
+				return false;
+			}
+		}
+	}
 
+	public function compressPackage() {
+
+	}
+
+	public function exportingTaxonomies() {
 		$taxonomyRepository = Repositories\Taxonomies::get_instance();
-		$termRepository = Repositories\Terms::get_instance();
 		$taxonomies = $taxonomyRepository->fetch();
 		if($taxonomies->have_posts()) {
+			$fileTaxonomies = "package/tnc_taxonomies";
+			$listTaxonomies = [];
 			while ($taxonomies->have_posts()) {
 				$taxonomies->the_post();
 				$taxonomy = new Entities\Taxonomy($taxonomies->post);
-				$this->getTermsRecursively( $termRepository, $taxonomy );
+				$listTaxonomies[] = $taxonomy->_toJson();
 			}
+			$this->append_to_file($fileTaxonomies, '[' . \implode(",", $listTaxonomies) . ']', false);
 			wp_reset_postdata();
 		}
 		return true;
 	}
 
-	/**
-	 * @param $termRepository Repositories\Terms the terms repository
-	 * @param $taxonomy Entities\Taxonomy the taxonomy to fetch the terms
-	 * @param $parent int the id of term father
-	 * @param $level int the level to create the csv line
-	 *
-	 * @return string
-	 */
-	public function getTermsRecursively( $termRepository, $taxonomy, $parent = 0, $level = 0 ) {
-		$terms = $termRepository->fetch([ 'parent' => $parent, 'hide_empty' => false ], $taxonomy->get_id());
-		$fileTerm = $taxonomy->get_id() . "_terms";
-		if( $terms && sizeof($terms) > 0 ) {
-			$line = [];
-			foreach ( $terms as $term ) {
-				$line[] = $term->get_name();
-				$line[] = $term->get_description();
-				for ($i =0; $i < $level; $i++){
-						array_unshift($line, "" );
-				}
-				
-				$line_string = $this->str_putcsv($line);
-				$this->append_to_file($fileTerm, $line_string."\n");
-				$this->getTermsRecursively($termRepository, $taxonomy, $term->get_id(), $level + 1);
-				$line = array();
+	public function exportingTerms() {
+
+		$term_exporte = new Term_Exporter();
+		$term_repo = Repositories\Terms::get_instance();
+		$taxonomies = Repositories\Taxonomies::get_instance()->fetch();
+
+		if($taxonomies->have_posts()) {
+			$listTaxonomies = [];
+			while ($taxonomies->have_posts()) {
+				$taxonomies->the_post();
+				$taxonomy = new Entities\Taxonomy($taxonomies->post);
+				$listTaxonomies[] = $taxonomy->get_id();
+
+				$term_exporte->get_terms_recursively( $term_repo, $taxonomy );
 			}
+			wp_reset_postdata();
 		}
-	}
 
-	function str_putcsv($item, $delimiter = ',', $enclosure = '"') {
-		$fp = fopen('php://temp', 'r+');
-		fputcsv($fp, $item, $delimiter, $enclosure);
-		rewind($fp);
-		$fstats = fstat($fp);
-		$data = fread($fp, $fstats['size']);
-		fclose($fp);
-		return rtrim($data, "\n");
+		// $termRepository = Repositories\Terms::get_instance();
+		// $terms = $termRepository->fetch(['hide_empty' => false], $listTaxonomies);
+		// $fileTerms = "package/tnc_terms";
+		// foreach ($terms as $term) {
+		// 	$listTerms[] = $term->_toJson();
+		// }
+		// $this->append_to_file($fileTerms, '[' . \implode(",", $listTerms) . ']', false);
+		return true;
 	}
-
 }

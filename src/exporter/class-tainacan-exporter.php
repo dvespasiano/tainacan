@@ -698,9 +698,9 @@ class Exporter extends CommunImportExport {
 		
 	}
 
-	public function add_new_file($key) {
+	public function add_new_file($key, $use_prefix) {
 		$upload_dir_info = wp_upload_dir();
-		$prefix = $this->get_id();
+		$prefix = ($use_prefix ? $this->get_id() : "" );
 		$upload_dir = trailingslashit( $upload_dir_info['basedir'] );
 		$upload_url = trailingslashit( $upload_dir_info['baseurl'] );
 		$exporter_folder = 'tainacan/exporter';
@@ -724,13 +724,13 @@ class Exporter extends CommunImportExport {
 	* @param string $key The file identifier. (it is the name of the file, with extension, and will be prefixed with the process ID)
 	* @param string $data The content to be appended to the file
 	*/
-	public function	append_to_file($key, $data) {
+	public function	append_to_file($key, $data, $prefix=true) {
 		if ( array_key_exists ( $key , $this->output_files ) ) {
 			$fp = fopen($this->output_files[$key]['filename'], 'a');
 			fwrite($fp, $data);
 			fclose($fp);
 		} else { // será?
-			$this->add_new_file($key);
+			$this->add_new_file($key, $prefix);
 			$this->append_to_file($key, $data);
 		}
 	}

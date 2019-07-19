@@ -79,6 +79,15 @@ class Importer_Handler {
             'manual_mapping' => true,
         ]);
 
+		$this->register_importer([
+			'name' => 'Package Tainacan',
+			'description' => __('Import package Tainacan', 'tainacan'),
+			'slug' => 'packagetainacan',
+			'class_name' => '\Tainacan\Importer\Package_Importer',
+			'manual_collection' => false,
+			'manual_mapping' => false,
+		]);
+
 		do_action('tainacan_register_importers');
 
 		add_action( 'tainacan-enqueue-admin-scripts', array($this, 'enqueue_scripts') );
