@@ -122,24 +122,14 @@ class Package_Exporter extends Exporter {
 		$taxonomies = Repositories\Taxonomies::get_instance()->fetch();
 
 		if($taxonomies->have_posts()) {
-			$listTaxonomies = [];
 			while ($taxonomies->have_posts()) {
 				$taxonomies->the_post();
 				$taxonomy = new Entities\Taxonomy($taxonomies->post);
-				$listTaxonomies[] = $taxonomy->get_id();
-
-				$term_exporte->get_terms_recursively( $term_repo, $taxonomy );
+				$file_name = 'package/' . $taxonomy->get_id() . '_' . $taxonomy->get_name() . '_terms.csv';
+				$term_exporte->get_terms_recursively( $term_repo, $taxonomy, 0, 0, $file_name, false );
 			}
 			wp_reset_postdata();
 		}
-
-		// $termRepository = Repositories\Terms::get_instance();
-		// $terms = $termRepository->fetch(['hide_empty' => false], $listTaxonomies);
-		// $fileTerms = "package/tnc_terms";
-		// foreach ($terms as $term) {
-		// 	$listTerms[] = $term->_toJson();
-		// }
-		// $this->append_to_file($fileTerms, '[' . \implode(",", $listTerms) . ']', false);
 		return true;
 	}
 }

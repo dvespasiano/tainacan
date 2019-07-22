@@ -10,7 +10,7 @@ class Package_Importer extends Importer {
 	public function __construct($attributes = array()) {
 		parent::__construct($attributes);
 
-		$this->new_ids = [];
+		$this->new_ids = ['taxonomy'=>[], 'taxonomy_reverse' => []];
 
 		$this->package_folder = "/var/www/html/wp-content/uploads/tainacan/exporter/package/";
 
@@ -21,6 +21,11 @@ class Package_Importer extends Importer {
 			'name' => 'Create Taxonomies',
 			'progress_label' => 'Creating taxonomies',
 			'callback' => 'create_taxonomies'
+		],
+		[
+			'name' => 'Create Terms',
+			'progress_label' => 'Creating terms',
+			'callback' => 'create_terms'
 		]
 	];
 
@@ -56,35 +61,48 @@ class Package_Importer extends Importer {
 				}
 			}
 			if ($taxonomy->validate()) {
-				$t = $taxonomy_repository->insert($taxonomy);
-				$this->new_ids['taxonomy'][$taxonomy->id] = $taxonomy->get_id();
+				$tax_old_id = $tax->id;
+				$taxonomy = $taxonomy_repository->insert($taxonomy);
+				$this->new_ids['taxonomy'][$tax_old_id] = $taxonomy->get_id();
+				$this->new_ids['taxonomy_reverse'][$taxonomy->get_id()] = $tax_old_id;
 			}
 		}
+		$this->add_transient("new_ids", $this->new_ids);
 	}
 
 	public function create_terms() {
-		$file_taxonomies = "tnc_terms";
+		$this->add_log('started crate terms');
 
-		$term_repository = Repositories\Terms::get_instance();
-		$str_json_terms = file_get_contents($this->package_folder . $file_taxonomies);
-		$terms_list = \json_decode($str_json_terms);
+		$this->new_ids = $this->get_transient('new_ids');
+		if ($this->new_ids == null) return true;
 
-		// foreach ($terms_list as $term) {
-		// 	$new_term = new Entities\Term();
-		// 	foreach ($term as $key => $value) {
-		// 		$set_ = 'set_' . $key;
-		// 		if (method_exists( $new_term, $set_ ) ) {
-		// 			$new_term->$set_($value);
-		// 		}
-		// 	}
-		// 	if ($new_term->validate()) {
-				
-		// 		$new_term->set_taxonomy($this->new_ids['taxonomy'][$new_term->get_taxonomy()]);
+		$taxonomies = Repositories\Taxonomies::get_instance()->fetch();
+		if($taxonomies->have_posts()) {
+			while ($taxonomies->have_posts()) {
+				$taxonomies->the_post();
+				$taxonomy = new Entities\Taxonomy($taxonomies->post);
+				if ( !empty ($this->new_ids['taxonomy_reverse'][$taxonomy->get_id()] ) ) {
+					$file_name = $this->package_folder . $this->new_ids['taxonomy_reverse'][$taxonomy->get_id()] . '_' . $taxonomy->get_name() . '_terms.csv';
 
-		// 		$t = $term_repository->insert($new_term);
-		// 		$this->new_ids['term'][$term->id] = $new_term->get_id();
-		// 	}
-		// }
+					$this->add_log('rum term importer');
+					$term_importer = new Term_Importer();
+					$term_importer->add_transient( 'new_taxonomy', $taxonomy->get_db_identifier() );
+					$term_importer->set_tmp_file($file_name);
+
+					do {
+						$return_import = $term_importer->create_terms();
+						$term_importer->set_in_step_count($return_import);
+					} while ( !is_bool($return_import)  );
+
+					if ($return_import == false) {
+						$this->add_error_log("Error on create terms: " . \implode("-", $term_importer->get_error_log()) );
+						return false;
+					}
+				}
+			}
+			wp_reset_postdata();
+		}
+		return true;
 
 	}
 }
