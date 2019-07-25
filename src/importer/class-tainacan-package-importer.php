@@ -71,38 +71,50 @@ class Package_Importer extends Importer {
 	}
 
 	public function create_terms() {
-		$this->add_log('started crate terms');
-
 		$this->new_ids = $this->get_transient('new_ids');
 		if ($this->new_ids == null) return true;
-
-		$taxonomies = Repositories\Taxonomies::get_instance()->fetch();
-		if($taxonomies->have_posts()) {
-			while ($taxonomies->have_posts()) {
-				$taxonomies->the_post();
-				$taxonomy = new Entities\Taxonomy($taxonomies->post);
-				if ( !empty ($this->new_ids['taxonomy_reverse'][$taxonomy->get_id()] ) ) {
-					$file_name = $this->package_folder . $this->new_ids['taxonomy_reverse'][$taxonomy->get_id()] . '_' . $taxonomy->get_name() . '_terms.csv';
-
-					$this->add_log('rum term importer');
-					$term_importer = new Term_Importer();
-					$term_importer->add_transient( 'new_taxonomy', $taxonomy->get_db_identifier() );
-					$term_importer->set_tmp_file($file_name);
-
-					do {
-						$return_import = $term_importer->create_terms();
-						$term_importer->set_in_step_count($return_import);
-					} while ( !is_bool($return_import)  );
-
-					if ($return_import == false) {
-						$this->add_error_log("Error on create terms: " . \implode("-", $term_importer->get_error_log()) );
-						return false;
-					}
-				}
-			}
-			wp_reset_postdata();
+		
+		$taxonomies_stack = $this->get_transient('taxonomies');
+		if ($taxonomies_stack === null) {
+			$taxonomies_stack = $this->new_ids['taxonomy_reverse'];
 		}
-		return true;
 
+		if( !empty($taxonomies_stack) ) {
+			$taxonomy_old_id = end($taxonomies_stack);
+			$taxonomy_id = key($taxonomies_stack);
+			$taxonomy = Repositories\Taxonomies::get_instance()->fetch($taxonomy_id);
+			if (! $taxonomy instanceof Tainacan\Entities\Taxonomy) {
+				$this->add_error_log("error on retrieving taxonomy");
+				return false;
+			}
+			$file_name = $this->package_folder . $taxonomy_old_id . '_' . $taxonomy->get_name() . '_terms.csv';
+			$in_step_count = $this->get_transient('in_step_count') != null ? $this->get_transient('in_step_count') : 0 ;
+
+			$term_importer = $this->get_transient('term_importer') != null ? $this->get_transient('term_importer') : new Term_Importer(); 
+			$term_importer->add_transient('new_taxonomy', $taxonomy->get_db_identifier() );
+			$term_importer->set_tmp_file($file_name);
+			$term_importer->set_in_step_count($in_step_count);
+
+			$return_import = $term_importer->create_terms();
+			if (!is_bool($return_import)) {
+				$this->add_transient('taxonomies', 		$taxonomies_stack);
+				$this->add_transient('in_step_count', $return_import);
+				$this->add_transient('term_importer', $term_importer);
+				return $return_import;
+			} elseif ($return_import == true) {
+				array_pop($taxonomies_stack);
+				$this->add_transient('taxonomies', 		$taxonomies_stack );
+				$this->add_transient('in_step_count', null);
+				$this->add_transient('term_importer', null);
+				$this->add_log( \implode( "\n", $term_importer->get_log() ) );
+				return 0;
+			} elseif ($return_import == false) {
+				$this->add_error_log("Error on create terms: " . \implode("-", $term_importer->get_error_log()) );
+				return false;
+			}
+		} else {
+			$this->add_log('finished import terms.');
+			return true;
+		}
 	}
 }
