@@ -11,17 +11,19 @@
  * Export:
  *	structures
  *		repositories
- *			taxonomies (terms)
- *			metadada
- *			filters
+ *			taxonomies (x)
+ *			terms (x)
+ *			metadada ()
+ *			mapping ()
+ *			filters ()
  *		collection
- *			metadada
- *			filters
- *			self collection
- *			item
+ *			collection ()
+ *			metadada ()
+ *			mapping ()
+ *			filters ()
+  *			item ()
  *
  */
- 
 
 namespace Tainacan\Exporter;
 use Tainacan;
@@ -47,11 +49,15 @@ class Package_Exporter extends Exporter {
 			'callback' => 'exportingTerms'
 		],
 		[
+			'name' => '',
+			'progress_label' => 'Exporting repository metadata',
+			'callback' => 'exportingRepositoryMetadata'
+		],
+		[
 			'name' => 'compress package',
 			'progress_label' => 'Exporting compressing package',
 			'callback' => 'compressPackage'
 		]
-		
 	];
 
 	public function __construct($attributes = array()){
@@ -64,6 +70,19 @@ class Package_Exporter extends Exporter {
 
 		$this->set_default_options([]);
 	}
+
+	function str_putcsv($item, $delimiter = ',', $enclosure = '"') {
+		// Open a memory "file" for read/write...
+		$fp = fopen('php://temp', 'r+');
+
+		fputcsv($fp, $item, $delimiter, $enclosure);
+		rewind($fp);
+		//Getting detailed stats to check filesize:
+		$fstats = fstat($fp);
+		$data = fread($fp, $fstats['size']);
+		fclose($fp);
+		return rtrim($data, "\n");
+}
 
 	/**
 	 * When exporter is finished, gets the final output
@@ -132,4 +151,53 @@ class Package_Exporter extends Exporter {
 		}
 		return true;
 	}
+
+	private function exporterMetadata($metadata, $file_output) {
+		$this->add_log( 'Exporting repository metadata ID: ' . $metadata->get_id() );
+		$array_metadata = [
+			$metadata->get_id(),
+			$metadata->get_status(),
+			$metadata->get_name(),
+			$metadata->get_slug(),
+			$metadata->get_order(),
+			$metadata->get_parent(),
+			$metadata->get_description(),
+			$metadata->get_required(),
+			$metadata->get_multiple(),
+			$metadata->get_display(),
+			$metadata->get_cardinality(),
+			$metadata->get_collection_key(),
+			$metadata->get_mask(),
+			$metadata->get_default_value(),
+			$metadata->get_metadata_type(),
+			\json_encode($metadata->get_metadata_type_options())];
+		$line_string = $this->str_putcsv($array_metadata);
+		$this->append_to_file($file_output, "$line_string\n", false);
+	}
+
+	public function exportingRepositoryMetadata() {
+		$file_default_metadata = "package/tnc_default_metadata";
+
+		$result = $this->get_transient('result');
+		if ($result === null ) {
+			$metadatum_repository = Repositories\Metadata::get_instance();
+			$args = [
+				'meta_query' => [
+					[
+						'key'     => 'collection_id',
+						'value'   => 'default',
+						'compare' => '='
+					]
+				]
+			];
+			$result = $metadatum_repository->fetch( $args, 'OBJECT' );
+		}
+		$this->exporterMetadata(\array_pop($result), $file_default_metadata);
+		if( empty($result) ) {
+			return true;
+		}
+		$this->add_transient('result', $result );
+		return count($result);
+	}
+
 }
