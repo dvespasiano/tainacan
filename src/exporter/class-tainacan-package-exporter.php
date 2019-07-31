@@ -153,25 +153,27 @@ class Package_Exporter extends Exporter {
 	}
 
 	private function exporterMetadata($metadata, $file_output) {
-		$this->add_log( 'Exporting repository metadata ID: ' . $metadata->get_id() );
-		$array_metadata = [
-			$metadata->get_id(),
-			$metadata->get_status(),
-			$metadata->get_name(),
-			$metadata->get_slug(),
-			$metadata->get_order(),
-			$metadata->get_parent(),
-			$metadata->get_description(),
-			$metadata->get_required(),
-			$metadata->get_multiple(),
-			$metadata->get_display(),
-			$metadata->get_cardinality(),
-			$metadata->get_collection_key(),
-			$metadata->get_mask(),
-			$metadata->get_default_value(),
-			$metadata->get_metadata_type(),
-			\json_encode($metadata->get_metadata_type_options())];
-		$line_string = $this->str_putcsv($array_metadata);
+		$this->add_log( 'Exporting repository metadata ID: ' . $metadata->get_id() . $metadata->_toJson() );
+		// $array_metadata = [
+		// 	$metadata->get_id(),
+		// 	$metadata->get_status(),
+		// 	$metadata->get_name(),
+		// 	$metadata->get_slug(),
+		// 	$metadata->get_order(),
+		// 	$metadata->get_parent(),
+		// 	$metadata->get_description(),
+		// 	$metadata->get_required(),
+		// 	$metadata->get_multiple(),
+		// 	$metadata->get_display(),
+		// 	$metadata->get_cardinality(),
+		// 	$metadata->get_collection_key(),
+		// 	$metadata->get_mask(),
+		// 	$metadata->get_default_value(),
+		// 	$metadata->get_metadata_type(),
+		// 	\json_encode($metadata->get_metadata_type_options())];
+		//$line_string = $this->str_putcsv($array_metadata);
+		//$line_string = $this->str_putcsv($metadata->_toJson());
+		$line_string = $metadata->_toJson();
 		$this->append_to_file($file_output, "$line_string\n", false);
 	}
 
@@ -192,10 +194,10 @@ class Package_Exporter extends Exporter {
 			];
 			$result = $metadatum_repository->fetch( $args, 'OBJECT' );
 		}
-		$this->exporterMetadata(\array_pop($result), $file_default_metadata);
 		if( empty($result) ) {
 			return true;
 		}
+		$this->exporterMetadata(\array_pop($result), $file_default_metadata);
 		$this->add_transient('result', $result );
 		return count($result);
 	}

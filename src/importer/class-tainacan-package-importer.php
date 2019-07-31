@@ -9,7 +9,9 @@ class Package_Importer extends Importer {
 	private $new_ids;
 	public function __construct($attributes = array()) {
 		parent::__construct($attributes);
-
+		
+		$this->remove_import_method('file');
+		
 		$this->new_ids = ['taxonomy'=>[], 'taxonomy_reverse' => []];
 
 		$this->package_folder = "/var/www/html/wp-content/uploads/tainacan/exporter/package/";
@@ -26,6 +28,11 @@ class Package_Importer extends Importer {
 			'name' => 'Create Terms',
 			'progress_label' => 'Creating terms',
 			'callback' => 'create_terms'
+		],
+		[
+			'name' => 'Create Repository Metadata',
+			'progress_label' => 'Creating repository metadata',
+			'callback' => 'exporting_repository_metadata'
 		]
 	];
 
@@ -116,5 +123,55 @@ class Package_Importer extends Importer {
 			$this->add_log('finished import terms.');
 			return true;
 		}
+	}
+
+	private function import_metadata($file_path) {
+		$metadatum_repository = Repositories\Metadata::get_instance();
+
+		if (($handle = fopen($file_path, "r")) !== false) {
+			$file = $handle;
+			$this->set_current_step_total( filesize($this->file_path) );
+		} else {
+			$this->add_error_log(' Error reading the file of metadatas');
+			return false;
+		}
+
+		$position_file = $this->get_in_step_count();
+		fseek($file, $position_file);
+		if (( $values = fgets($file) ) !== FALSE) {
+			$position_file = ftell($file);
+
+			$metadatum = new Entities\Metadatum();
+			$obj = \json_decode($values, true);
+			$old_id = $obj->id;
+			foreach ($obj as $key => $value) {
+				$set_ = 'set_' . $key;
+				if (method_exists( $metadatum, $set_ ) ) {
+					$metadatum->$set_($value);
+				}
+			}
+
+			if($metadatum->validate()) {
+				$metadatum = $metadatum_repository->insert($metadatum);
+				$this->new_ids['metadata'][$old_id] = $metadatum->get_id();
+				$this->new_ids['metadata_reverse'][$metadatum->get_id()] = $old_id;
+				$this->add_log('Added metadata');
+			} else {
+				$validationErrors = $metadatum->get_errors();
+				$err_msg = json_encode($validationErrors);
+				$this->add_error_log("erro=>$err_msg");
+				$this->abort();
+				return false;
+			}
+			return $position_file;
+		} else {
+			return true;
+		}
+
+	}
+
+	public function exporting_repository_metadata() {
+		$file_metadata = "tnc_default_metadata";
+		return $this->import_metadata($this->package_folder . $file_metadata);
 	}
 }
