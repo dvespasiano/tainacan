@@ -126,6 +126,10 @@ class Package_Importer extends Importer {
 	}
 
 	private function import_metadata($file_path) {
+		
+		$this->new_ids = $this->get_transient('new_ids');
+		if ($this->new_ids == null) return true;
+
 		$metadatum_repository = Repositories\Metadata::get_instance();
 
 		if (($handle = fopen($file_path, "r")) !== false) {
@@ -147,6 +151,9 @@ class Package_Importer extends Importer {
 			foreach ($obj as $key => $value) {
 				$set_ = 'set_' . $key;
 				if (method_exists( $metadatum, $set_ ) ) {
+					if(array_key_exists('taxonomy_id', $value)) {
+						$value['taxonomy_id'] = $this->new_ids['taxonomy'][$value['taxonomy_id']];
+					}
 					$metadatum->$set_($value);
 				}
 			}
