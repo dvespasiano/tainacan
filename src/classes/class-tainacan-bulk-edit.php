@@ -236,6 +236,7 @@ class Bulk_Edit  {
 		
 		if ($run) {
 			do_action('tainacan-bulk-edit-set-status', $value, $this->get_id(), $select_q, $query);
+			Repositories\Items::get_instance()->clear_cache('Items');
 		}
 		
 		return $run;
@@ -392,7 +393,9 @@ class Bulk_Edit  {
 		$query = "UPDATE $wpdb->posts SET post_status = 'trash' WHERE ID IN ($select_q)";
 
 		// TODO trash comments?
-
+		
+		Repositories\Items::get_instance()->clear_cache('Items');
+		
 		return $wpdb->query($query);
 
 	}
@@ -417,7 +420,9 @@ class Bulk_Edit  {
 		$wpdb->query( $query_delete_meta2 );
 
 		// TODO untrash comments?
-
+		
+		Repositories\Items::get_instance()->clear_cache('Items');
+		
 		return $affected;
 
 	}
@@ -434,7 +439,9 @@ class Bulk_Edit  {
 		$security = " AND post_status = 'trash'";
 
 		$query_delete = "DELETE FROM $wpdb->posts WHERE ID IN ($select_q) $security";
-
+		
+		Repositories\Items::get_instance()->clear_cache('Items');
+		
 		return $wpdb->query($query_delete);
 
 	}
@@ -487,6 +494,8 @@ class Bulk_Edit  {
 					
 				}
 				
+				Repositories\Items::get_instance()->clear_cache('Items');
+				
 				return $return;
 
 				
@@ -529,6 +538,8 @@ class Bulk_Edit  {
 				
 			}
 			
+			Repositories\Items::get_instance()->clear_cache('Items');
+			
 			return $return; // return last value
 			
 
@@ -567,7 +578,9 @@ class Bulk_Edit  {
 				$delete_q = $this->_build_select( "post_id" );
 
 				$query = $wpdb->prepare( "DELETE FROM $wpdb->term_relationships WHERE term_taxonomy_id = %d AND object_id IN ($delete_q)", $term->term_taxonomy_id );
-
+				
+				Repositories\Items::get_instance()->clear_cache('Items');
+				
 				return $wpdb->query($query);
 
 				//TODO update term count
@@ -581,7 +594,9 @@ class Bulk_Edit  {
 			$delete_q = $this->_build_select( "post_id" );
 
 			$query = $wpdb->prepare( "DELETE FROM $wpdb->postmeta WHERE meta_key = %s AND meta_value = %s AND post_id IN ( SELECT implicitTemp.post_id FROM ($delete_q) implicitTemp )", $metadatum->get_id(), $value );
-
+			
+			Repositories\Items::get_instance()->clear_cache('Items');
+			
 			return $wpdb->query($query);
 
 		}
@@ -716,7 +731,9 @@ class Bulk_Edit  {
 				$delete_tax_q = $wpdb->prepare( "SELECT term_taxonomy_id FROM $wpdb->term_taxonomy WHERE taxonomy = %s" , $tax->get_db_identifier() );
 
 				$query = "DELETE FROM $wpdb->term_relationships WHERE term_taxonomy_id IN ($delete_tax_q) AND object_id IN ($delete_q)";
-
+				
+				Repositories\Items::get_instance()->clear_cache('Items');
+				
 				return $wpdb->query($query);
 
 				//TODO update term count
@@ -731,7 +748,8 @@ class Bulk_Edit  {
 
 			$query = $wpdb->prepare( "DELETE FROM $wpdb->postmeta WHERE meta_key = %s AND post_id IN ( SELECT implicitTemp.post_id FROM ($delete_q) implicitTemp )", $metadatum->get_id() );
 
-
+			Repositories\Items::get_instance()->clear_cache('Items');
+			
 			return $wpdb->query($query);
 
 		}
