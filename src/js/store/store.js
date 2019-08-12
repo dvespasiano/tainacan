@@ -3,11 +3,16 @@ import Vuex from 'vuex';
 
 import item from './modules/item/';
 import collection from './modules/collection/';
-import fields from './modules/fields/';
+import metadata from './modules/metadata/';
 import filter from './modules/filter/';
 import search from './modules/search/';
-import category from './modules/category/';
-import event from './modules/event';
+import taxonomy from './modules/taxonomy/';
+import activity from './modules/activity';
+import importer from './modules/importer';
+import bgprocess from './modules/bgprocess';
+import bulkedition from './modules/bulk-edition';
+import exporter from './modules/exporter';
+import exposer from './modules/exposer';
 
 Vue.use(Vuex);
 
@@ -23,10 +28,15 @@ export default new Vuex.Store({
     modules: {
         item,
         collection,
-        fields,
+        metadata,
         filter,
         search,
-        category,
-        event,
+        taxonomy,
+        activity,
+        importer,
+        bgprocess,
+        bulkedition,
+        exporter,
+        exposer
     }
 })

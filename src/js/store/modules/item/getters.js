@@ -1,9 +1,13 @@
-export const getFields =  state => {
-    return state.fields;
+export const getMetadata =  state => {
+    return state.metadata;
 }
 
 export const getItem = state => {
     return state.item;
+}
+
+export const getLastUpdated = state => {
+    return state.lastUpdated;
 }
 
 export const getItemTitle = state => {
@@ -12,4 +16,8 @@ export const getItemTitle = state => {
 
 export const getAttachments =  state => {
     return state.attachments;
+}
+
+export const getTotalAttachments =  state => {
+    return state.totalAttachments;
 }

@@ -1,21 +1,17 @@
 <?php
 
-class TAINACAN_REST_Controller extends WP_REST_Controller {
+namespace Tainacan\API;
+
+class REST_Controller extends \WP_REST_Controller {
 
 
 	/**
-	 * TAINACAN_REST_Controller constructor.
+	 * REST_Controller constructor.
 	 */
 	public function __construct() {
-		//add_action( 'rest_api_init', function () {
-		//	register_rest_field( 'user',
-		//		'meta',
-		//		array(
-		//			'update_callback' => array($this, 'up_user_meta'),
-		//			'get_callback'    => array($this, 'gt_user_meta'),
-		//		)
-		//	);
-		//} );
+		$this->namespace = TAINACAN_REST_NAMESPACE;
+		add_action('rest_api_init', array($this, 'register_routes'));
+		add_filter('tainacan-api-prepare-items-args', array($this, 'add_support_to_tax_query_like'));
 	}
 
 	/**
@@ -29,19 +25,17 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 
 		if (is_array($attributes)) {
 			foreach ( $attributes as $attribute ) {
-				try {
-					$get_              = 'get_' . $attribute;
-					$object_filtered[$attribute] = $object->$get_();
-				} catch ( \Error $error ) {
-					// Do nothing
+				if ( ! is_array( $attribute ) ) {
+					$object_filtered[ $attribute ] = $object->get( $attribute );
 				}
 			}
 		} else {
-			try{
-				$get_ = 'get_' . $attributes;
-				$object_filtered[$attributes] = $object->$get_();
-			} catch (\Error $error){
-				// Do nothing
+			if(strstr($attributes, ',')){
+				$attributes = explode(',', $attributes);
+
+				return $this->filter_object_by_attributes($object, $attributes);
+			} else {
+				$object_filtered[ $attributes ] = $object->get( $attributes );
 			}
 		}
 
@@ -52,19 +46,12 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 	 * @param $object
 	 * @param $new_values
 	 *
-	 * @return Tainacan\Entities\Entity
+	 * @return \Tainacan\Entities\Entity
 	 */
 	protected function prepare_item_for_updating($object, $new_values){
-
 		foreach ($new_values as $key => $value) {
-			try {
-				$set_ = 'set_' . $key;
-				$object->$set_( $value );
-			} catch (\Error $error){
-				// Do nothing
-			}
+			$object->set($key, $value);
 		}
-
 		return $object;
 	}
 
@@ -72,7 +59,7 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 	 * @param $request
 	 *
 	 * @return array
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function prepare_filters($request){
 		$queries = [
@@ -82,6 +69,7 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 			'authorid'     => 'author_id',
 			'authorname'   => 'author_name',
 			'search'       => 's',
+			'searchterm'   => 'search',
 			'status'       => 'post_status',
 			'offset'       => 'offset',
 			'metaquery'    => 'meta_query',
@@ -95,20 +83,24 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 			'metacompare'  => 'meta_compare',
 			'hideempty'    => 'hide_empty',
 			'perpage'      => 'posts_per_page',
+			'number'	   => 'number',
+			'parent'	   => 'parent',
 			'paged'        => 'paged',
 			'postin'       => 'post__in',
 			'relation'     => 'relation',
 			'nopaging'     => 'nopaging',
-			'meta_key'     => 'meta_key',
-			'meta_type'    => 'meta_type'
+			'metatype'     => 'meta_type',
+			'hierarchical' => 'hierarchical',
+			'exclude'      => 'exclude',
+			'excludetree'  => 'exclude_tree'
 		];
 
 		$meta_query = [
-			'key'       => 'key',
-			'value'     => 'value',
-			'compare'   => 'compare',
-			'relation'  => 'relation',
-			'fieldtype' => 'type',
+			'key'       	=> 'key',
+			'value'     	=> 'value',
+			'compare'   	=> 'compare',
+			'relation'  	=> 'relation',
+			'metadatumtype' => 'type',
 		];
 
 		$date_query = [
@@ -127,11 +119,11 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 		];
 
 		$tax_query = [
-			'taxonomy' => 'taxonomy',
-			'field'    => 'field',
-			'terms'    => 'terms',
-			'operator' => 'operator',
-			'relation' => 'relation',
+			'taxonomy'  => 'taxonomy',
+			'metadatum' => 'field',
+			'terms'     => 'terms',
+			'operator'  => 'operator',
+			'relation'  => 'relation',
 		];
 
 		$args = [];
@@ -153,91 +145,60 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 
 		$args['perm'] = 'readable';
 
-		return $args;
+		return apply_filters('tainacan-api-prepare-items-args', $args, $request);
 	}
-
-	/**
-	 * @param $data
-	 * @param $field_name
-	 * @param $request
-	 *
-	 * @return WP_Error
-	 */
-	function gt_user_meta( $data, $field_name, $request ) {
-		if( $data['id'] ){
-			$user_meta = get_user_meta( $data['id'] );
+	
+	public function add_support_to_tax_query_like($args) {
+		
+		if (!isset($args['tax_query']) || !is_array($args['tax_query'])) {
+			return $args;
 		}
-
-		if ( !$user_meta ) {
-			return new WP_Error( 'No user meta found', 'No user meta found', array( 'status' => 404 ) );
-		}
-
-		foreach ($user_meta as $key => $value) {
-			$data[$key] = $value;
-		}
-
-		return $data;
-	}
-
-	/**
-	 * @param $meta
-	 * @param $user
-	 * @param $field_name
-	 *
-	 * @param $request
-	 *
-	 * @return mixed|WP_Error
-	 */
-	public function up_user_meta( $meta, $user, $field_name, $request ) {
-		if ( !$user->ID ) {
-			return new WP_Error( 'No user found', 'No user found', array( 'status' => 404 ) );
-		}
-
-		$user_id = $user->ID;
-		$metas = $field_name === 'meta' ? $meta : [];
-
-		$map = [
-			'metakey',
-			'metavalue',
-			'prevvalue',
-		];
-
-		if ($request['delete'] === 'true'){
-			if($this->contains_array($metas, $map)){
-				foreach ($metas as $index => $meta){
-					if (isset($meta[$map[0]], $meta[$map[1]])){
-						delete_user_meta($user_id, $meta[$map[0]], $meta[$map[1]]);
-					}
+		
+		$new_tax_query = [];
+		
+		foreach ($args['tax_query'] as $index => $tax_query) {
+			
+			if ( isset($tax_query['operator']) && $tax_query['operator'] == 'LIKE' &&
+		 		isset($tax_query['terms']) && is_string($tax_query['terms']) ) {
+				
+				$terms = get_terms([
+					'taxonomy' => $tax_query['taxonomy'],
+					'fields' => 'ids',
+					'search' => $tax_query['terms']
+				]);
+				
+				$new_tax_query[] = [
+					'taxonomy' => $tax_query['taxonomy'],
+					'terms' => $terms,
+				];
+				
+			} elseif ( isset($tax_query['operator']) && $tax_query['operator'] == 'NOT LIKE' &&
+		 		isset($tax_query['terms']) && is_string($tax_query['terms']) ) {
+				
+				$terms = get_terms([
+					'taxonomy' => $tax_query['taxonomy'],
+					'fields' => 'ids',
+					'search' => $tax_query['terms']
+				]);
+				if ($terms) {
+					$new_tax_query[] = [
+						'taxonomy' => $tax_query['taxonomy'],
+						'terms' => $terms,
+						'operator' => 'NOT IN'
+					];
 				}
+				
+				
 			} else {
-				foreach ($metas as $meta){
-					if (isset($meta[$map[0]], $meta[$map[1]])){
-						delete_user_meta($user_id, $meta[$map[0]], $meta[$map[1]]);
-					}
-				}
+				$new_tax_query[] = $tax_query;
 			}
-		} elseif($this->contains_array($metas, $map)){
-			foreach ($metas as $index => $meta){
-				if(isset($meta[$map[0]], $meta[$map[1]], $meta[$map[2]])){
 
-					update_user_meta($user_id, $meta[$map[0]], $meta[$map[1]], $meta[$map[2]]);
-				} elseif (isset($meta[$map[0]], $meta[$map[1]])){
-
-					add_user_meta($user_id, $meta[$map[0]], $meta[$map[1]]);
-				}
-			}
-		} else {
-			foreach ($metas as $meta){
-				if(isset($meta[$map[0]], $meta[$map[1]], $meta[$map[2]])){
-
-					update_user_meta($user_id, $meta[$map[0]], $meta[$map[1]], $meta[$map[2]]);
-				} elseif (isset($meta[$map[0]], $meta[$map[1]])){
-
-					add_user_meta($user_id, $meta[$map[0]], $meta[$map[1]]);
-				}
-			}
 		}
-
+		
+		$args['tax_query'] = $new_tax_query;
+		
+		return $args;
+		
 	}
 
 	/**
@@ -248,7 +209,7 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 	 * @param $args
 	 *
 	 * @return mixed
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	private function prepare_meta($mapped, $request, $query, $mapped_v, $args){
 		$request_meta_query = $request[$mapped];
@@ -261,24 +222,6 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 		if($this->contains_array($request_meta_query, $query)) {
 
 			foreach ( $request_meta_query as $index1 => $a ) {
-
-                // handle core field
-                if( is_array($a) && array_key_exists("key", $a) ){
-                    $field = new Tainacan\Entities\Field($a['key']);
-                    if( strpos( $field->get_field_type(), 'Core_Title') !== false ){
-                        $args[ 'post_title_in' ] = [
-                            'relation' => ( isset( $request_meta_query['relation']) ) ? $request_meta_query['relation'] : 'AND' ,
-                            'value' => ( is_array( $a['value'] ) ) ? $a['value'] : [$a['value']]
-                        ];
-                        continue;
-                    } else if( strpos( $field->get_field_type(), 'Core_Description') !== false ) {
-                        $args[ 'post_content_in' ] = [
-                            'relation' => ( isset( $request_meta_query['relation']) ) ? $request_meta_query['relation'] : 'AND' ,
-                            'value' => ( is_array( $a['value'] ) ) ? $a['value'] : [$a['value']]
-                        ];
-                        continue;
-                    }
-                }
 
 				foreach ( $query as $mapped_meta => $meta_v ) {
 					if ( isset( $a[ $meta_v ] ) ) {
@@ -357,7 +300,6 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 				'enum'    => array_merge(array_keys(get_post_stati()), array('any')),
 				'type'    => 'string',
 			),
-			'sanitize_callback' => array($this, 'sanitize_post_statuses'),
 		);
 
 		$query_params['offset'] = array(
@@ -394,12 +336,8 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 
 		$query_params['perpage'] = array(
 			'description'        => __( "Maximum number of $object_name to be returned in result set." ),
-			'type'               => 'integer',
+			'type'               => 'numeric',
 			'default'            => 10,
-			'minimum'            => 1,
-			'maximum'            => 100,
-			'sanitize_callback'  => 'absint',
-			'validate_callback'  => 'rest_validate_request_arg',
 		);
 
 		$query_params['paged'] = array(
@@ -419,15 +357,15 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 		return array(
 			'metakey'      => array(
 				'type'        => 'integer/string',
-				'description' => __('Custom field key.'),
+				'description' => __('Custom metadata key.'),
 			),
 			'metavalue'    => array(
 				'type'        => 'string/array',
-				'description' => __('Custom field value'),
+				'description' => __('Custom metadata value'),
 			),
 			'metavaluenum' => array(
 				'type'        => 'number',
-				'description' => __('Custom field value'),
+				'description' => __('Custom metadata value'),
 			),
 			'metacompare'  => array(
 				'type'        => 'string',
@@ -435,18 +373,18 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 				'default'     => '=',
 			),
 			'metaquery'    => array(
-				'description' => __('Limit result set to items that have specific custom fields'),
+				'description' => __('Limits result set to items that have specific custom metadata'),
 				'type'        => 'array/object',
 				'items'       => array(
 					'keys' => array(
 						'key'      => array(
 							'type'        => 'string',
-							'description' => __('Custom field key.'),
+							'description' => __('Custom metadata key.'),
 						),
 						'value'    => array(
 							'type'        => 'string/array',
-							'description' => __('Custom field value. It can be an array only when compare is IN, NOT IN, BETWEEN, or NOT BETWEEN. You dont have to specify a value when using the EXISTS or NOT EXISTS comparisons in WordPress 3.9 and up.
-	(Note: Due to bug #23268, value is required for NOT EXISTS comparisons to work correctly prior to 3.9. You must supply some string for the value parameter. An empty string or NULL will NOT work. However, any other string will do the trick and will NOT show up in your SQL when using NOT EXISTS. Need inspiration? How about \'bug #23268\'.)'),
+							'description' => __('Custom metadata value. It can be an array only when compare is IN, NOT IN, BETWEEN, or NOT BETWEEN. You dont have to specify a value when using the EXISTS or NOT EXISTS comparisons in WordPress 3.9 and up.
+	(Note: Due to bug #23268, value is required for NOT EXISTS comparisons to work correctly prior to 3.9. You must supply some string for the value parameter. An empty string or NULL will NOT work. However, any other string will do the trick and will NOT show up in your SQL when using NOT EXISTS. Need inspiration? How about \'bug #23268\'.'),
 						),
 						'compare'  => array(
 							'type'        => 'string',
@@ -458,16 +396,16 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 							'description' => __('OR or AND, how the sub-arrays should be compared.'),
 							'default'     => 'AND',
 						),
-						'fieldtype' => array(
+						'metadatumtype' => array(
 							'type'        => 'string',
-							'description' => __('Custom field type. Possible values are NUMERIC, BINARY, CHAR, DATE, DATETIME, DECIMAL, SIGNED, TIME, UNSIGNED. Default value is CHAR. You can also specify precision and scale for the DECIMAL and NUMERIC types (for example, DECIMAL(10,5) or NUMERIC(10) are valid). The type DATE works with the compare value BETWEEN only if the date is stored at the format YYYY-MM-DD and tested with this format.'),
+							'description' => __('Custom metadata type. Possible values are NUMERIC, BINARY, CHAR, DATE, DATETIME, DECIMAL, SIGNED, TIME, UNSIGNED. Default value is CHAR. You can also specify precision and scale for the DECIMAL and NUMERIC types (for example, DECIMAL(10,5) or NUMERIC(10) are valid). The type DATE works with the compare value BETWEEN only if the date is stored at the format YYYY-MM-DD and tested with this format.'),
 						),
 					),
 					'type'            => 'array'
 				),
 			),
 			'datequery'    => array(
-				'description' => __('Limit result set to items that was created in specific date.'),
+				'description' => __('Limits the result set to items that were created in some specific date'),
 				'type'        => 'array/object',
 				'items'       => array(
 					'keys' => array(
@@ -530,7 +468,7 @@ class TAINACAN_REST_Controller extends WP_REST_Controller {
 							'type'        => 'string',
 							'description' => __('The taxonomy data base identifier.')
 						),
-						'field'    => array(
+						'metadatum'    => array(
 							'type'        => 'string',
 							'description' => __('Select taxonomy term by. Possible values are term_id, name, slug or term_taxonomy_id. Default value is term_id.')
 						),

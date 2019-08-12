@@ -26,6 +26,8 @@ class Entity_Factory {
 	 * @param array $args
 	 * @param bool $is_validated_and_in_db
 	 *
+	 * @param bool $publish
+	 *
 	 * @return mixed
 	 * @throws \ErrorException
 	 */
@@ -35,6 +37,8 @@ class Entity_Factory {
         $Tainacan_Item_Metadata = \Tainacan\Repositories\Item_Metadata::get_instance();
         
 		try {
+			$type = trim($type);
+
 			if(empty($type)){
 				throw new \InvalidArgumentException('The type can\'t be empty');
 			} elseif(!strrchr($type, '_')){
@@ -50,12 +54,15 @@ class Entity_Factory {
 			if($type[$type_size-1] == 'y'){
 				$type[$type_size-1] = 'i';
 				$this->repository_type = "\Tainacan\Repositories\\$type".'es';
+			} elseif($type == 'Metadatum'){
+				$this->repository_type = "\Tainacan\Repositories\Metadata";
 			} else {
 				$this->repository_type = "\Tainacan\Repositories\\$type".'s';
 			}
 
 			$this->entity     = new $this->entity_type();
-			$this->repository = $this->repository_type::get_instance();
+			$repo = $this->repository_type;
+			$this->repository = $repo::get_instance();
 			
 			if($publish) {
 				$this->entity->set_status('publish');
@@ -63,7 +70,7 @@ class Entity_Factory {
 
 			if (!empty($args) && $is_validated_and_in_db) {
 				foreach ($args as $attribute => $content) {
-					$set_ = 'set_' . $attribute;
+					$set_ = 'set_' . trim($attribute);
 					$this->entity->$set_( $content );
 				}
 
@@ -75,25 +82,25 @@ class Entity_Factory {
 
 			} elseif (!empty($args) && !$is_validated_and_in_db){
 				foreach ($args as $attribute => $content) {
-					$set_ = 'set_' . $attribute;
+					$set_ = 'set_' . trim($attribute);
 					$this->entity->$set_( $content );
 				}
 
 			} elseif (empty($args) && !$is_validated_and_in_db) {
 				try {
-					$this->entity->set_name( "$type " . random_int( 0, 10000 ) . " for test" );
+					$this->entity->set_name( "$type " . rand( 0, 10000 ) . " for test" );
 					$this->entity->set_description( 'It is only for test' );
-				} catch (\Error $exception){
-					$this->entity->set_title( "$type " . random_int( 0, 10000 ) . " for test" );
+				} catch (\Exception $exception){
+					$this->entity->set_title( "$type " . rand( 0, 10000 ) . " for test" );
 					$this->entity->set_description( 'It is only for test' );
 				}
 
 			} elseif (empty($args) && $is_validated_and_in_db) {
 				try {
-					$this->entity->set_name( "$type " . random_int( 0, 10000 ) . " for test" );
+					$this->entity->set_name( "$type " . rand( 0, 10000 ) . " for test" );
 					$this->entity->set_description( 'It is only for test' );
-				} catch (\Error $exception){
-					$this->entity->set_title( "$type " . random_int( 0, 10000 ) . " for test" );
+				} catch (\Exception $exception){
+					$this->entity->set_title( "$type " . rand( 0, 10000 ) . " for test" );
 					$this->entity->set_description( 'It is only for test' );
 				}
 
@@ -102,7 +109,7 @@ class Entity_Factory {
 			} else {
 				throw new \InvalidArgumentException('One or more arguments are invalid.');
 			}
-		} catch (\Error $exception){
+		} catch (\Exception $exception){
 			echo "\n" . $exception->getMessage() . "\n";
 		}
 		

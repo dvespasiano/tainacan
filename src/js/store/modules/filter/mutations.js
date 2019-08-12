@@ -1,40 +1,5 @@
 import Vue from 'vue';
 
-// METAQUERIES ----------------------------------------------------------------------------
-export const setPostQueryAttribute = ( state, { attr, value }) => {
-    Vue.set( state.postquery, attr , value );
-};
-
-export const setPostQuery = ( state, postquery ) => {
-    state.postquery = postquery;
-};
- 
-export const addMetaQuery = ( state, filter ) => {
-    let index = state.postquery.metaquery.findIndex( item => item.key === filter.field_id);
-    if ( index >= 0){
-        Vue.set( state.postquery.metaquery, index, {
-            key: filter.field_id,
-            value: filter.value,
-            compare: filter.compare,
-            type: filter.type
-        } );
-    }else{
-        state.postquery.metaquery.push({
-            key: filter.field_id,
-            value: filter.value,
-            compare: filter.compare,
-            type: filter.type
-        });
-    }
-};
-
-export const removeMetaQuery = ( state, filter ) => {
-    let index = state.postquery.metaquery.findIndex( item => item.key === filter.field_id);
-    if (index >= 0) {
-        state.postquery.metaquery.splice(index, 1);
-    }
-}
-
 // FILTERS ------------------------------------------------------------------------
 export const deleteFilter = ( state, filter ) => {
     let index = state.filters.findIndex(deletedFilter => deletedFilter.id === filter.id);
@@ -59,6 +24,44 @@ export const setFilters = (state, filters) => {
     state.filters = filters;
 }
 
+export const updateFiltersOrderFromCollection = (state, filtersOrder) => {
+    for (let i = 0; i < state.filters.length; i++) {
+        let updatedFilterIndex = filtersOrder.findIndex(aFilter => aFilter.id == state.filters[i].id);
+        if (updatedFilterIndex >= 0)
+            state.filters[i].enabled = filtersOrder[updatedFilterIndex].enabled;  
+    }
+}
+
 export const setFilterTypes = (state, filterTypes) => {
     state.filterTypes = filterTypes;
+}
+
+// export const setRepositoryCollectionFilters = (state, repositoryCollectionFilters) => {
+//     state.repositoryCollectionFilters = repositoryCollectionFilters;
+// }
+
+export const setRepositoryCollectionFilters = (state, { collectionName, repositoryCollectionFilters }) => {
+    if (collectionName != undefined)
+        Vue.set(state.repositoryCollectionFilters, collectionName, repositoryCollectionFilters);
+    else
+        Vue.set(state.repositoryCollectionFilters, 'repository-filters', repositoryCollectionFilters);
+}
+
+export const clearRepositoryCollectionFilters = (state) => {
+    state.repositoryCollectionFilters = {};
+}
+
+export const setTaxonomyFilters = (state, taxonomyFilters) => {
+    state.taxonomyFilters = taxonomyFilters;
+}
+
+export const setTaxonomyFiltersForCollection = (state, { collectionName, taxonomyFilters }) => {
+    if (collectionName != undefined)
+        Vue.set(state.taxonomyFilters, collectionName, taxonomyFilters);
+    else
+        Vue.set(state.taxonomyFilters, 'repository-filters', taxonomyFilters);
+}
+
+export const clearTaxonomyFilters = (state) => {
+    state.taxonomyFilters = {};
 }

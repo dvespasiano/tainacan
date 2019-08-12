@@ -70,8 +70,12 @@ class Entity {
     public $cap;
 
 	/**
-	 * Create an instance of Entity and get post data from database or create a new StdClass if $which is 0
+	 * Create an instance of Entity 
 	 *
+	 * If ID or WP Post is passed, it retrieves the object from the database 
+	 * 
+	 * Attention: If the ID or Post provided do not match the Entity post type, an Exception will be thrown
+	 * 
 	 * @param integer|\WP_Post optional $which Entity ID or a WP_Post object for existing Entities. Leave empty to create a new Entity.
 	 *
 	 * @throws \Exception
@@ -79,10 +83,11 @@ class Entity {
     function __construct($which = 0) {
     	if (is_numeric($which) && $which > 0) {
     		$post = get_post($which);
-    		
-    		if ($post instanceof \WP_Post) {
+			if ($post instanceof \WP_Post) {
     			$this->WP_Post = get_post($which);
-    		}
+    		} else {
+				throw new \Exception( 'No entity was found with ID ' . $which );
+			}
     		
     	} elseif ($which instanceof \WP_Post) {
     		$this->WP_Post = $which;
@@ -98,18 +103,21 @@ class Entity {
     	} else {
     		$this->WP_Post = new \StdClass();
     	}
+		
+		$collection_pt_pattern = '/' . Collection::$db_identifier_prefix . '\d+' . Collection::$db_identifier_sufix . '/';
+		
     	if(
-    		is_int($which) &&
             $this->WP_Post instanceof \WP_Post &&
-    		$which != 0 &&
+    		isset( $this->WP_Post->ID ) &&
     		( 
     			( $this->get_post_type() !== false && $this->WP_Post->post_type != $this->get_post_type() ) ||
     			// Lets check if it is a collection and have rigth post_type
-    			( $this->get_post_type() === false && $this->WP_Post->post_type != Collection::$db_identifier_prefix.$this->get_db_identifier().Collection::$db_identifier_sufix ) // TODO check if we can use only get_db_identifier for this
+    			( $this->get_post_type() === false && $this->WP_Post->post_type && ! preg_match($collection_pt_pattern, $this->WP_Post->post_type) ) 
     		)
     	) {
     		if($this->get_post_type() === false) {
-    			throw new \Exception('the returned post is not the same type of the entity! expected: '.Collection::$db_identifier_prefix.$this->get_db_identifier().Collection::$db_identifier_sufix.' and actual: '.$this->WP_Post->post_type );
+    			
+				throw new \Exception('the returned post is not the same type of the entity! expected: '.Collection::$db_identifier_prefix.$this->get_db_identifier().Collection::$db_identifier_sufix.' and actual: '.$this->WP_Post->post_type );
     		}
     		else {
     			throw new \Exception('the returned post is not the same type of the entity! expected: '.$this->get_post_type().' and actual: '.$this->WP_Post->post_type );
@@ -132,31 +140,82 @@ class Entity {
         return $repository;
     }
 
+	/**
+	 * @param $date
+	 *
+	 * @return string
+	 */
+	public function get_date_i18n($date){
+
+		if($date) {
+			$unix_time_stamp = strtotime( $date );
+
+			return date_i18n( get_option( 'date_format' ), $unix_time_stamp );
+		}
+
+		return '';
+	}
+
     /**
      * return the value for a mapped property
      * @param string $prop id of property
      * @return mixed property value
      */
     public function get_mapped_property($prop) {
-    	if (isset($this->$prop) ){
+    	if ( isset($this->$prop) ){
     		return $this->$prop;
     	}
 
     	//prop is not set at object, try to get from database
     	$repository = $this->get_repository();
+		$value = $repository->get_mapped_property($this, $prop);
 
-        return $repository->get_mapped_property($this, $prop);
+        return apply_filters('tainacan-entity-get-property', $value, $prop, $this);
     }
     
     /**
      * set the value of a mapped property
+     *
+     * This is a protected method. If you want to set an entity prop 
+     * using the prop name dynamically, use the set() method
+     * 
      * @param string $prop id of the property
      * @param mixed $value the value to be setted
      */
-    public function set_mapped_property($prop, $value) {
+    protected function set_mapped_property($prop, $value) {
         $this->set_validated(false);
+		$value = apply_filters('tainacan-entity-set-property', $value, $prop, $this);
         $this->$prop = $value;
     }
+	
+	/**
+     * set the value property
+     *
+     * 
+     * @param string $prop id of the property
+     * @param mixed $value the value to be setted
+     * @return null|mixed Null on failure, the value that was set on success
+     */
+    public function set($prop, $value) {
+        $method = 'set_' . $prop;
+		if ( method_exists($this, $method) ) {
+			return $this->$method($value);
+		}
+    }
+
+	/**
+	 * get the value property
+	 *
+	 *
+	 * @param string $prop id of the property
+	 * @return null|mixed Null on failure, the value that was set on success
+	 */
+	public function get($prop) {
+		$method = 'get_' . $prop;
+		if ( method_exists($this, $method) ) {
+			return $this->$method();
+		}
+	}
 
     /**
      * set the status of the entity
@@ -189,7 +248,10 @@ class Entity {
             }
         }
         
-        $this->set_validated($is_valid);
+        if($is_valid){
+        	$this->set_as_valid();
+        }
+
         return $is_valid;
     }
     
@@ -298,7 +360,7 @@ class Entity {
         return true;
     }
 
-    public function __toArray(){
+    public function _toArray(){
         $repository = $this->get_repository();
 	    $map = $repository->get_map();
 
@@ -306,12 +368,14 @@ class Entity {
 	    foreach($map as $prop => $content) {
 		    $attributes[$prop] = $this->get_mapped_property($prop);
 	    }
-
-	    return $attributes;
+		
+		$hook_prefix = self::get_post_type();
+		
+		return apply_filters("{$hook_prefix}-to-array", $attributes, $this);
     }
 
-	public function  __toJSON(){
-		return json_encode($this->__toArray(), JSON_NUMERIC_CHECK);
+	public function  _toJson(){
+		return json_encode($this->_toArray(), JSON_NUMERIC_CHECK);
 	}
 	
 	/**
@@ -325,7 +389,7 @@ class Entity {
 	}
 	
 	/**
-	 * Return if user can read this entity
+	 * Return if user can edit this entity
 	 * @param int|\WP_User|null $user the user for capability check, null for the current user
 	 * @return bool
 	 */
@@ -335,7 +399,7 @@ class Entity {
 	}
 	
 	/**
-	 * Return if user can read this entity
+	 * Return if user can delete this entity
 	 * @param int|\WP_User|null $user the user for capability check, null for the current user
 	 * @return bool
 	 */
@@ -345,7 +409,7 @@ class Entity {
 	}
 	
 	/**
-	 * Return if user can read this entity
+	 * Return if user can publish this entity
 	 * @param int|\WP_User|null $user the user for capability check, null for the current user
 	 * @return bool
 	 */

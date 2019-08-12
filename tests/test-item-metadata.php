@@ -18,7 +18,7 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
      */
     function test_add() {
 
-        $Tainacan_Fields = \Tainacan\Repositories\Fields::get_instance();
+        $Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
         $Tainacan_Item_Metadata = \Tainacan\Repositories\Item_Metadata::get_instance();
 
         $collection = $this->tainacan_entity_factory->create_entity(
@@ -30,18 +30,18 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
 	        true
         );
 
-	    $field = $this->tainacan_entity_factory->create_entity(
-        	'field',
+	    $metadatum = $this->tainacan_entity_factory->create_entity(
+        	'metadatum',
 	        array(
 	        	'name'              => 'metadado',
 		        'description'       => 'descricao',
 		        'collection'        => $collection,
-		        'field_type'  => 'Tainacan\Field_Types\Text',
+		        'metadata_type'  => 'Tainacan\Metadata_Types\Text',
 	        ),
 	        true
         );
 
-        $test = $Tainacan_Fields->fetch($field->get_id());
+        $test = $Tainacan_Metadata->fetch($metadatum->get_id());
         
         $i = $this->tainacan_entity_factory->create_entity(
         	'item',
@@ -71,7 +71,7 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
      * Teste da insercao de um metadado simples com o tipo
      */
     function teste_required(){
-        $Tainacan_Fields = \Tainacan\Repositories\Fields::get_instance();
+        $Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
         $Tainacan_Item_Metadata = \Tainacan\Repositories\Item_Metadata::get_instance();
 
         $collection = $this->tainacan_entity_factory->create_entity(
@@ -83,24 +83,25 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
 	        true
         );
 
-	    $field = $this->tainacan_entity_factory->create_entity(
-	    	'field',
+	    $metadatum = $this->tainacan_entity_factory->create_entity(
+	    	'metadatum',
 		    array(
 		    	'name'              => 'metadado',
 			    'description'       => 'descricao',
 			    'collection'        => $collection,
 			    'required'          => 'yes',
-			    'field_type'  => 'Tainacan\Field_Types\Text',
+			    'metadata_type'  => 'Tainacan\Metadata_Types\Text',
 		    ),
 		    true
 	    );
 
-        $test = $Tainacan_Fields->fetch($field->get_id());
+        $test = $Tainacan_Metadata->fetch($metadatum->get_id());
         
         $i = $this->tainacan_entity_factory->create_entity(
         	'item',
 	        array(
 	        	'title'       => 'item teste',
+		        'status'      => 'publish',
 		        'description' => 'adasdasdsa',
 		        'collection'  => $collection
 	        ),
@@ -125,7 +126,7 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
     }
     
     function teste_collection_key(){
-        $Tainacan_Fields = \Tainacan\Repositories\Fields::get_instance();
+        $Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
         $Tainacan_Item_Metadata = \Tainacan\Repositories\Item_Metadata::get_instance();
 
         $collection = $this->tainacan_entity_factory->create_entity(
@@ -137,14 +138,14 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
 	        true
         );
 
-	    $field = $this->tainacan_entity_factory->create_entity(
-		    'field',
+	    $metadatum = $this->tainacan_entity_factory->create_entity(
+		    'metadatum',
 		    array(
 			    'name'              => 'metadado',
 			    'description'       => 'descricao',
 			    'collection'        => $collection,
 			    'collection_key'    => 'yes',
-			    'field_type'  => 'Tainacan\Field_Types\Text',
+			    'metadata_type'  => 'Tainacan\Metadata_Types\Text',
 		    ),
 		    true
 	    );
@@ -161,21 +162,21 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
 	    );
 		
 		$i2 = $this->tainacan_entity_factory->create_entity(
-		    'item',
-		    array(
-			    'title'       => 'other item',
-			    'description' => 'adasdasdsa',
-			    'collection'  => $collection,
-			    'status'      => 'publish'
-		    ),
-		    true
-	    );
+			'item',
+			array(
+				'title'       => 'other item',
+				'description' => 'adasdasdsa',
+				'collection'  => $collection,
+				'status'      => 'publish'
+			),
+			true
+		);
         
         $Tainacan_Items = \Tainacan\Repositories\Items::get_instance();
 
         $value = 'teste_val';
         
-        $item_metadata = new \Tainacan\Entities\Item_Metadata_Entity($i, $field);
+        $item_metadata = new \Tainacan\Entities\Item_Metadata_Entity($i, $metadatum);
         $item_metadata->set_value($value);
 
         $this->assertTrue($item_metadata->validate());
@@ -183,13 +184,13 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
         $item_metadata->validate();
         $item_metadata = $Tainacan_Item_Metadata->insert($item_metadata);
 
-        $n_item_metadata = new \Tainacan\Entities\Item_Metadata_Entity($i, $field);
+        $n_item_metadata = new \Tainacan\Entities\Item_Metadata_Entity($i, $metadatum);
         $n_item_metadata->set_value($value);
-        $this->assertTrue($n_item_metadata->validate(), 'trying to validate the same item with same value should be ok');
-		
-		$n_item_metadata2 = new \Tainacan\Entities\Item_Metadata_Entity($i2, $field);
-        $n_item_metadata2->set_value($value);
-        $this->assertFalse($n_item_metadata2->validate(), 'Collection key should not validate another item metadatada with the same value');
+		$this->assertTrue($n_item_metadata->validate(), 'trying to validate the same item with same value should be ok');
+
+		$n_item_metadata2 = new \Tainacan\Entities\Item_Metadata_Entity($i2, $metadatum);
+		$n_item_metadata2->set_value($value);
+		$this->assertFalse($n_item_metadata2->validate(), 'Collection key should not validate another item metadatada with the same value');
     }
     
     function teste_fetch(){
@@ -206,18 +207,18 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
 
 
         $this->tainacan_entity_factory->create_entity(
-        	'field',
+        	'metadatum',
             array(
             	'name'              => 'metadado',
 	            'description'       => 'descricao',
 	            'collection'        => $collection,
 	            'status'            => 'publish',
-	            'field_type'  => 'Tainacan\Field_Types\Text',
+	            'metadata_type'  => 'Tainacan\Metadata_Types\Text',
             ),
 	        true
         );
 
-        //$test = $Tainacan_Fields->fetch($field->get_id());
+        //$test = $Tainacan_Metadata->fetch($metadatum->get_id());
         
         $i = $this->tainacan_entity_factory->create_entity(
         	'item',
@@ -233,15 +234,159 @@ class Item_Metadata extends TAINACAN_UnitTestCase {
 
         $names = [];
         foreach ($item_metadatas as $item_metadata) {
-            $names[] = $item_metadata->get_field()->get_name();
+            $names[] = $item_metadata->get_metadatum()->get_name();
         }
         
         $this->assertTrue(is_array($item_metadatas));
 
-        // notice for repository fields
+        // notice for repository metadata
         $this->assertEquals(3, sizeof($item_metadatas));
-        //first 2 fields are repository fields
+        //first 2 metadata are repository metadata
         $this->assertTrue( in_array('metadado', $names) );
         
+	}
+	
+	function test_metadata_text_textarea() {
+		$Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
+
+        $collection = $this->tainacan_entity_factory->create_entity(
+	        'collection',
+	        array(
+		        'name' => 'teste'
+	        ),
+	        true
+		);
+		
+		$i = $this->tainacan_entity_factory->create_entity(
+		    'item',
+		    array(
+			    'title'       => 'item teste',
+			    'description' => 'description',
+			    'collection'  => $collection,
+			    'status'      => 'publish'
+		    ),
+		    true
+	    );
+
+	    $metadatum_text = $this->tainacan_entity_factory->create_entity(
+	        'metadatum',
+	        array(
+		        'name'              => 'metadadoText',
+		        'description'       => 'descricao',
+		        'collection_id'     => $collection->get_id(),
+		        'metadata_type'  => 'Tainacan\Metadata_Types\Text',
+	        ),
+	        true
+		);
+		
+		$metadatum_textarea = $this->tainacan_entity_factory->create_entity(
+	        'metadatum',
+	        array(
+		        'name'              => 'metadadoTextarea',
+		        'description'       => 'descricao',
+		        'collection_id'     => $collection->get_id(),
+		        'metadata_type'  => 'Tainacan\Metadata_Types\Textarea',
+	        ),
+	        true
+		);
+		
+		$value_text = 'GOOGLE: www.google.com';
+		$item_metadata_text = new \Tainacan\Entities\Item_Metadata_Entity($i, $metadatum_text);
+		$item_metadata_text->set_value($value_text);
+		
+		$value_textarea = 'GOOGLE: www.google.com \n GOOGLE: https://www.google.com';
+		$item_metadata_textarea = new \Tainacan\Entities\Item_Metadata_Entity($i, $metadatum_textarea);
+		$item_metadata_textarea->set_value($value_textarea);
+
+		$response_text = 'GOOGLE: <a href="http://www.google.com" target="_blank" title="www.google.com">www.google.com</a>';
+		$response_textarea = 'GOOGLE: <a href="http://www.google.com" target="_blank" title="www.google.com">www.google.com</a> \n GOOGLE: <a href="https://www.google.com" target="_blank" title="https://www.google.com">https://www.google.com</a>';
+
+		$this->assertEquals($item_metadata_text->get_value_as_html(), $response_text);
+		$this->assertEquals($item_metadata_textarea->get_value_as_html(), $response_textarea);
+	}
+
+    /**
+     * @group test_item_metadata_has_value
+     */
+	function test_item_metadata_has_value() {
+        $Tainacan_Item_Metadata = \Tainacan\Repositories\Item_Metadata::get_instance();
+
+        $collection = $this->tainacan_entity_factory->create_entity(
+            'collection',
+            array(
+                'name' => 'teste'
+            ),
+            true
+        );
+
+        $i = $this->tainacan_entity_factory->create_entity(
+            'item',
+            array(
+                'title'       => 'item teste',
+                'description' => 'description',
+                'collection'  => $collection,
+                'status'      => 'publish'
+            ),
+            true
+        );
+
+
+        $metadatum_textarea = $this->tainacan_entity_factory->create_entity(
+            'metadatum',
+            array(
+                'name'              => 'metadadoTextarea',
+                'description'       => 'descricao',
+                'collection_id'     => $collection->get_id(),
+                'metadata_type'  => 'Tainacan\Metadata_Types\Textarea',
+            ),
+            true
+        );
+
+        $value_textarea = '';
+        $item_metadata_textarea = new \Tainacan\Entities\Item_Metadata_Entity($i, $metadatum_textarea);
+        $item_metadata_textarea->set_value($value_textarea);
+
+        $item_metadata_textarea->validate();
+        $item_metadata_textarea = $Tainacan_Item_Metadata->insert($item_metadata_textarea);
+
+        $this->assertFalse($item_metadata_textarea->has_value());
+
+        $item_metadata_textarea->set_value('has_value');
+        $item_metadata_textarea->validate();
+        $item_metadata_textarea = $Tainacan_Item_Metadata->insert($item_metadata_textarea);
+
+        $this->assertTrue($item_metadata_textarea->has_value());
+
+        $metadatum_text = $this->tainacan_entity_factory->create_entity(
+            'metadatum',
+            array(
+                'name'              => 'metadadoText',
+                'description'       => 'descricao',
+                'collection_id'     => $collection->get_id(),
+                'metadata_type'     => 'Tainacan\Metadata_Types\Text',
+                'multiple'          => 'yes'
+            ),
+            true
+        );
+
+        $item_metadata_text = new \Tainacan\Entities\Item_Metadata_Entity($i, $metadatum_text);
+
+        $item_metadata_text->set_value([
+            ''
+        ]);
+
+        $item_metadata_text->validate();
+        $item_metadata = $Tainacan_Item_Metadata->insert($item_metadata_text);
+
+        $this->assertFalse($item_metadata->has_value());
+
+		$item_metadata_text->set_value([
+            'has_value'
+        ]);
+
+        $item_metadata_text->validate();
+        $item_metadata_text = $Tainacan_Item_Metadata->insert($item_metadata_text);
+
+        $this->assertTrue($item_metadata_text->has_value());
     }
 }

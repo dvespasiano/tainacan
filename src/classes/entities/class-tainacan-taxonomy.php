@@ -45,7 +45,7 @@ class Taxonomy extends Entity {
 	static $db_identifier_prefix = 'tnc_tax_';
 	
 	public function  __toString(){
-		return 'Hello, my name is '. $this->get_name();
+		return apply_filters("tainacan-taxonomy-to-string", $this->get_name(), $this);
 	}
 
 	/**
@@ -53,7 +53,7 @@ class Taxonomy extends Entity {
 	 *
 	 * @return bool
 	 */
-	function register_taxonomy() {
+	function tainacan_register_taxonomy() {
         $labels = array(
             'name'              => $this->get_name(),
             'singular_name'     => $this->get_name(),
@@ -67,32 +67,31 @@ class Taxonomy extends Entity {
             'new_item_name'     => __( 'New Genre term', 'tainacan' ),
             'menu_name'         => $this->get_name(),
         );
+		
+		$enabled_post_types = $this->get_enabled_post_types();
+        $enabled_post_types = sizeof($enabled_post_types) ? $enabled_post_types : null;
+		$show_ui = is_array($enabled_post_types) ? true : false;
 
         $args = array(
             'hierarchical'      => true,
             'labels'            => $labels,
-            'show_ui'           => tnc_enable_dev_wp_interface(),
-            'show_admin_column' => tnc_enable_dev_wp_interface(),
+            'show_ui'           => $show_ui,
+            'show_in_rest'      => $show_ui,
+            'show_admin_column' => false,
             'rewrite'           => [
                 'slug' => $this->get_slug()
             ],
         );
         
-        
-        $tax_cpts = [];
-        if (is_array($this->get_collections())){
-            foreach ($this->get_collections() as $tax_col){
-                $tax_cpts[] = $tax_col->get_db_identifier();
-            }
-        }
-        
         if (taxonomy_exists($this->get_db_identifier())){
             unregister_taxonomy($this->get_db_identifier());
         }
         
+        
+        
         register_taxonomy( 
             $this->get_db_identifier(), 
-            $tax_cpts, 
+            $enabled_post_types, 
             $args 
         );
         
@@ -135,6 +134,15 @@ class Taxonomy extends Entity {
 	 */
 	function get_slug() {
         return $this->get_mapped_property('slug');
+    }
+    
+    /**
+	 * Return the enabled post types
+	 *
+	 * @return array
+	 */
+	function get_enabled_post_types() {
+        return $this->get_mapped_property('enabled_post_types');
     }
     
     // special Getters
@@ -186,6 +194,15 @@ class Taxonomy extends Entity {
 	function set_allow_insert($value) {
         $this->set_mapped_property('allow_insert', $value);
     }
+    
+    /**
+	 * Sets enabled post types
+	 *
+	 * @param array $value array of post types slugs
+	 */
+	function set_enabled_post_types($value) {
+		$this->set_mapped_property('enabled_post_types', $value);
+	}
 
 	/**
 	 * Validate Taxonomy
@@ -203,6 +220,20 @@ class Taxonomy extends Entity {
 
 		return parent::validate();
 
+	}
+	
+	/**
+	* Check if a term already exists 
+	*
+	* @param string $term_name The term name 
+	* @param int|null $parent The ID of the parent term to look for children or null to look for terms in any hierarchical position. Default is null 
+	* @param bool $return_term wether to return the term object if it exists. default is to false 
+	* 
+	* @return bool|WP_Term return boolean indicating if term exists. If $return_term is true and term exists, return WP_Term object 
+	*/
+	function term_exists($term_name, $parent = null, $return_term = false) {
+		$repo = $this->get_repository();
+		return $repo->term_exists($this, $term_name, $parent, $return_term);
 	}
 
 }

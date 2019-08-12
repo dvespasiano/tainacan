@@ -4,11 +4,14 @@ import * as mutations from './mutations';
 
 const state = {
     item: [],
-    fields: [],
+    metadata: [],
     error: [],
     itemTitle: '',
     attachment: {},
-    attachments: []
+    attachments: [],
+    lastUpdated: '',
+    comment_status: '',
+    totalAttachments: 0
 };
 
 

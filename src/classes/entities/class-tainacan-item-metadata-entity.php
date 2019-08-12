@@ -5,7 +5,7 @@ namespace Tainacan\Entities;
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 
 /**
- * Represents the Item Field Entity
+ * Represents the Item Metadatum Entity
  */
 class Item_Metadata_Entity extends Entity {
 	protected static $post_type = false;
@@ -18,7 +18,7 @@ class Item_Metadata_Entity extends Entity {
 	
 	protected
         $item,
-		$field,
+		$metadatum,
 		$parent_meta_id,
 		$meta_id,
 		$has_value,
@@ -27,13 +27,13 @@ class Item_Metadata_Entity extends Entity {
 	/**
 	 * 
 	 * @param Item   $item    Item Entity
-	 * @param Field  $field   Field Entity
+	 * @param Metadatum  $metadatum   Metadatum Entity
 	 * @param int $meta_id ID for a specific meta row 
 	 */
-    function __construct(Item $item, Field $field, $meta_id = null, $parent_meta_id = null) {
+    function __construct(Item $item = null, Metadatum $metadatum = null, $meta_id = null, $parent_meta_id = null) {
         
         $this->set_item($item);
-        $this->set_field($field);
+        $this->set_metadatum($metadatum);
 		
 		if (!is_null($meta_id) && is_int($meta_id)) {
 			$this->set_meta_id($meta_id);
@@ -47,14 +47,80 @@ class Item_Metadata_Entity extends Entity {
     }
 	
 	/**
+	 * Gets the string used before each value when concatenating multiple values 
+	 * to display item metadata value as html or string 
+	 * 
+	 * @return string 
+	 */
+	public function get_multivalue_prefix() {
+		$metadatum = $this->get_metadatum();
+		$value = '';
+		if (is_object($metadatum)) {
+			$fto = $metadatum->get_metadata_type_object();
+			if (is_object($fto)) {
+				
+				if ( method_exists($fto, 'get_multivalue_prefix') ) {
+					$value = $fto->get_multivalue_prefix();
+				}
+				
+			}
+		}
+		return apply_filters('tainacan-item-metadata-get-multivalue-prefix', $value, $this);
+	}
+	
+	/**
+	 * Gets the string used after each value when concatenating multiple values 
+	 * to display item metadata value as html or string 
+	 * 
+	 * @return string 
+	 */
+	public function get_multivalue_suffix() {
+		$metadatum = $this->get_metadatum();
+		$value = '';
+		if (is_object($metadatum)) {
+			$fto = $metadatum->get_metadata_type_object();
+			if (is_object($fto)) {
+				
+				if ( method_exists($fto, 'get_multivalue_suffix') ) {
+					$value = $fto->get_multivalue_suffix();
+				}
+				
+			}
+		}
+		return apply_filters('tainacan-item-metadata-get-multivalue-suffix', $value, $this);
+	}
+	
+	/**
+	 * Gets the string used in between each value when concatenating multiple values 
+	 * to display item metadata value as html or string 
+	 * 
+	 * @return string 
+	 */
+	public function get_multivalue_separator() {
+		$metadatum = $this->get_metadatum();
+		$value = '<span class="multivalue-separator"> | </span>';
+		if (is_object($metadatum)) {
+			$fto = $metadatum->get_metadata_type_object();
+			if (is_object($fto)) {
+				
+				if ( method_exists($fto, 'get_multivalue_separator') ) {
+					$value = $fto->get_multivalue_separator();
+				}
+				
+			}
+		}
+		return apply_filters('tainacan-item-metadata-get-multivalue-separator', $value, $this);
+	}
+	
+	/**
 	 * Get the value as a HTML string, with markup and links
 	 * @return string
 	 */
 	public function  get_value_as_html(){
-		$field = $this->get_field();
+		$metadatum = $this->get_metadatum();
 		
-		if (is_object($field)) {
-			$fto = $field->get_field_type_object();
+		if (is_object($metadatum)) {
+			$fto = $metadatum->get_metadata_type_object();
 			if (is_object($fto)) {
 				
 				if ( method_exists($fto, 'get_value_as_html') ) {
@@ -72,13 +138,21 @@ class Item_Metadata_Entity extends Entity {
 			
 			$total = sizeof($value);
 			$count = 0;
+			$prefix = $this->get_multivalue_prefix();
+			$suffix = $this->get_multivalue_suffix();
+			$separator = $this->get_multivalue_separator();
 			
 			foreach ($value as $v) {
+				
+				$return .= $prefix;
+				
 				$return .= (string) $v;
 				
+				$return .= $suffix;
+				
 				$count ++;
-				if ($count <= $total)
-					$return .= ', ';
+				if ($count < $total)
+					$return .= $separator;
 			}
 			
 		} else {
@@ -89,7 +163,7 @@ class Item_Metadata_Entity extends Entity {
 		
 		
 	}
-	
+
 	/**
 	 * Get the value as a plain text string
 	 * @return string
@@ -111,7 +185,7 @@ class Item_Metadata_Entity extends Entity {
 			
 			foreach ($value as $v) {
 				if ( $v instanceof Term || $v instanceof ItemMetadataEntity ) {
-					$return[] = $v->__toArray();
+					$return[] = $v->_toArray();
 				} else {
 					$return[] = $v;
 				}
@@ -122,7 +196,7 @@ class Item_Metadata_Entity extends Entity {
 			$return = '';
 			
 			if ( $value instanceof Term || $value instanceof ItemMetadataEntity ) {
-				$return = $value->__toArray();
+				$return = $value->_toArray();
 			} else {
 				$return = $value;
 			}
@@ -134,18 +208,33 @@ class Item_Metadata_Entity extends Entity {
 	
 	/**
 	 * Convert the object to an Array
+	 *
+	 * @param bool $formatted_values Whether to add or not values formatted as html and string to the response
+	 * @param bool $cascade Whether to add or not Item and Metadatum Entities as arrays to the response
+	 * 
 	 * @return array the representation of this object as an array
 	 */
-    public function  __toArray(){
+    public function  _toArray( $formatted_values = true, $cascade = false ){
 		$as_array = [];
 		
 		$as_array['value'] = $this->get_value_as_array();
-		$as_array['value_as_html'] = $this->get_value_as_html();
-		$as_array['value_as_string'] = $this->get_value_as_string();
-	    $as_array['item']  = $this->get_item()->__toArray();
-	    $as_array['field'] = $this->get_field()->__toArray();
+		
+		if ( $formatted_values ) {
+			$as_array['value_as_html'] = $this->get_value_as_html();
+			$as_array['value_as_string'] = $this->get_value_as_string();
 
-	    return $as_array;
+			if($this->get_metadatum()->get_metadata_type_object()->get_primitive_type() === 'date'){
+				$as_array['date_i18n'] = $this->get_date_i18n($this->get_value_as_string());
+			}
+		}
+		
+		if ( $cascade ) {
+			$as_array['item']  = $this->get_item()->_toArray();
+		    $as_array['metadatum'] = $this->get_metadatum()->_toArray();
+		}
+	    
+
+		return apply_filters('tainacan-item-metadata-to-array', $as_array, $this);
     }
     
     /**
@@ -159,7 +248,7 @@ class Item_Metadata_Entity extends Entity {
     }
     
     /**
-     * Define the field value
+     * Define the metadatum value
      *
      * @param [integer | string] $value
      * @return void
@@ -169,20 +258,20 @@ class Item_Metadata_Entity extends Entity {
     }
     
     /**
-     * Define the field
+     * Define the metadatum
      *
-     * @param Field $field
+     * @param Metadatum $metadatum
      * @return void
      */
-    function set_field(Field $field = null) {
-        $this->field = $field;
+    function set_metadatum(Metadatum $metadatum = null) {
+        $this->metadatum = $metadatum;
     }
 	
 	/**
 	 * Set the specific meta ID for this metadata.
 	 *
 	 * When this value is set, get_value() will use it to fetch the value from 
-	 * the post_meta table, instead of considering the item and field IDs
+	 * the post_meta table, instead of considering the item and metadatum IDs
 	 * 
 	 * @param int $meta_id the ID of a specifica post_meta row
 	 */
@@ -190,15 +279,15 @@ class Item_Metadata_Entity extends Entity {
 		if (is_int($meta_id)) {
 			$this->meta_id = $meta_id;
 			return true;
-			// TODO: Should we check here to see if this meta_id is really from this field and item?
+			// TODO: Should we check here to see if this meta_id is really from this metadatum and item?
 		}
 		return false;
 	}
 	
 	/**
-	 * Set parent_meta_id. Used when a item_metadata is inside a compound Field 
+	 * Set parent_meta_id. Used when a item_metadata is inside a compound Metadatum 
 	 *
-	 * When you have a multiple compound field, this indicates of which instace of the value this item_metadata is attached to
+	 * When you have a multiple compound metadatum, this indicates of which instace of the value this item_metadata is attached to
 	 * 
 	 * @param [type] $parent_meta_id [description]
 	 */
@@ -206,7 +295,7 @@ class Item_Metadata_Entity extends Entity {
 		if (is_int($parent_meta_id)) {
 			$this->parent_meta_id = $parent_meta_id;
 			return true;
-			// TODO: Should we check here to see if this meta_id is really from this field and item?
+			// TODO: Should we check here to see if this meta_id is really from this metadatum and item?
 		}
 		return false;
 	}
@@ -221,18 +310,18 @@ class Item_Metadata_Entity extends Entity {
     }
     
     /**
-     * Return the field
+     * Return the metadatum
      *
-     * @return Field
+     * @return Metadatum
      */
-    function get_field() {
-        return $this->field;
+    function get_metadatum() {
+        return $this->metadatum;
     }
 	
 	/**
      * Return the meta_id
      *
-     * @return Field
+     * @return Metadatum
      */
     function get_meta_id() {
         return isset($this->meta_id) ? $this->meta_id : null;
@@ -241,14 +330,14 @@ class Item_Metadata_Entity extends Entity {
 	/**
      * Return the meta_id
      *
-     * @return Field
+     * @return Metadatum
      */
     function get_parent_meta_id() {
         return isset($this->parent_meta_id) ? $this->parent_meta_id : 0;
     }
     
     /**
-     * Return the field value
+     * Return the metadatum value
      *
      * @return string | integer
      */
@@ -270,35 +359,35 @@ class Item_Metadata_Entity extends Entity {
             return $this->has_value;
         
 		$value = $this->get_value();
-		$this->has_value = !empty($value);
+		$this->has_value = (is_array($value)) ? !empty(array_filter($value)) : !empty($value);
 		return $this->has_value;
     }
     
     /**
-     * Return true if field is multiple, else return false
+     * Return true if metadatum is multiple, else return false
      *
      * @return boolean
      */
     function is_multiple() {
-        return $this->get_field()->is_multiple();
+        return $this->get_metadatum()->is_multiple();
     }
     
     /**
-     * Return true if field is key
+     * Return true if metadatum is key
      *
      * @return boolean
      */
     function is_collection_key() {
-        return $this->get_field()->is_collection_key();
+        return $this->get_metadatum()->is_collection_key();
     }
     
     /**
-     * Return true if field is required
+     * Return true if metadatum is required
      *
      * @return boolean
      */
     function is_required() {
-        return $this->get_field()->is_required();
+        return $this->get_metadatum()->is_required();
     }
     
     /**
@@ -308,19 +397,35 @@ class Item_Metadata_Entity extends Entity {
      */
     function validate() {   
         $value = $this->get_value();
-        $field = $this->get_field();
+        $metadatum = $this->get_metadatum();
         $item = $this->get_item();
-        
-        if (empty($value) && $this->is_required()) {
-            $this->add_error('required', $field->get_name() . ' is required');
-            return false;
-        }
 
-        $classFieldType = $field->get_field_type_object();
-        if( is_object( $classFieldType ) ){
-            if( method_exists ( $classFieldType , 'validate' ) ){
-                if( ! $classFieldType->validate( $this ) ) {
-                    $this->add_error('field_type_error', $classFieldType->get_errors() );
+	    if (empty($value) && $this->is_required() && in_array( $item->get_status(), apply_filters( 'tainacan-status-require-validation', [
+			    'publish',
+			    'future',
+			    'private'
+		    ] ) )
+	    ) {
+		    $this->add_error('required', $metadatum->get_name() . ' is required');
+		    return false;
+	    } elseif (empty($value) && !$this->is_required()) {
+		    $this->set_as_valid();
+		    return true;
+	    } elseif(empty($value) && $this->is_required() && !in_array( $item->get_status(), apply_filters( 'tainacan-status-require-validation', [
+			    'publish',
+			    'future',
+			    'private'
+		    ] ) )) {
+
+		    $this->set_as_valid();
+		    return true;
+	    }
+
+        $classMetadatumType = $metadatum->get_metadata_type_object();
+        if( is_object( $classMetadatumType ) ){
+            if( method_exists ( $classMetadatumType , 'validate' ) ){
+                if( ! $classMetadatumType->validate( $this ) ) {
+                    $this->add_error('metadata_type_error', $classMetadatumType->get_errors() );
                     return false;
                 }
             }
@@ -339,25 +444,25 @@ class Item_Metadata_Entity extends Entity {
                 }
                 
                 if ($this->is_required() && !$one_filled) {
-                    $this->add_error('required', $field->get_name() . ' is required');
+                    $this->add_error('required', $metadatum->get_name() . ' is required');
                     return false;
                 }
                 
                 if (!$valid) {
-                    $this->add_error('invalid', $field->get_name() . ' is invalid');
+                    $this->add_error('invalid', $metadatum->get_name() . ' is invalid');
                     return false;
                 }
                 
                 $this->set_as_valid();
                 return true;   
             } else {
-                $this->add_error('invalid', $field->get_name() . ' is invalid');
+                $this->add_error('invalid', $metadatum->get_name() . ' is invalid');
                 return false;
             }
         } else {
 
             if( is_array($value) ){
-				$this->add_error('not_multiple', $field->get_name() . ' do not accept array as value');
+				$this->add_error('not_multiple', $metadatum->get_name() . ' do not accept array as value');
                 return false;
             }
             
@@ -367,15 +472,15 @@ class Item_Metadata_Entity extends Entity {
                 $test = $Tainacan_Items->fetch([
                     'meta_query' => [
                         [
-                            'key'   => $this->field->get_id(),
+                            'key'   => $this->metadatum->get_id(),
                             'value' => $value
                         ],
-						'post__not_in' => [$item->get_id()]
-                    ]
+                    ],
+					'post__not_in' => [$item->get_id()]
                 ], $item->get_collection());
 
                 if ($test->have_posts()) {
-                    $this->add_error('key_exists', $field->get_name() . ' is a collection key and there is another item with the same value');
+                    $this->add_error('key_exists', $metadatum->get_name() . ' is a collection key and there is another item with the same value');
                     return false;
                 }
             }

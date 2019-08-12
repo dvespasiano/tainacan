@@ -12,26 +12,26 @@ class Items extends Repository {
 	
 	public $entities_type = '\Tainacan\Entities\Item';
 
-    private static $instance = null;
+	private static $instance = null;
 
-    public static function get_instance()
-    {
-        if(!isset(self::$instance))
-        {
-            self::$instance = new self();
-        }
+	public static function get_instance() {
+		if ( ! isset( self::$instance ) ) {
+			self::$instance = new self();
+		}
 
-        return self::$instance;
-    }
+		return self::$instance;
+	}
 
-    protected function __construct()
-    {
-        parent::__construct();
-        add_filter( 'posts_where', array(&$this, 'title_in_posts_where'), 10, 2 );
-        add_filter( 'posts_where', array(&$this, 'content_in_posts_where'), 10, 2 );
-    }
+	protected function __construct() {
+		parent::__construct();
+		add_filter( 'posts_where', array( &$this, 'title_in_posts_where' ), 10, 2 );
+		add_filter( 'posts_where', array( &$this, 'content_in_posts_where' ), 10, 2 );
+		add_filter( 'comments_open', [$this, 'hook_comments_open'], 10, 2);
+		add_action( 'tainacan-api-item-updated', array( &$this, 'hook_api_updated_item' ), 10, 2 );
+		add_filter( 'map_meta_cap', array( $this, 'map_meta_cap' ), 10, 4 );
+	}
 
-    public function get_map() {
+	public function get_map() {
 		return apply_filters( 'tainacan-get-map-' . $this->get_name(), [
 			'title'             => [
 				'map'         => 'post_title',
@@ -39,7 +39,7 @@ class Items extends Repository {
 				'type'        => 'string',
 				'description' => __( 'Title of the item', 'tainacan' ),
 				'on_error'    => __( 'The title should be a text value and not empty', 'tainacan' ),
-				'validation'  => v::stringType()->notEmpty(),
+				//'validation'  => v::stringType()->notEmpty(),
 			],
 			'status'            => [
 				'map'         => 'post_status',
@@ -81,35 +81,42 @@ class Items extends Repository {
 				'type'        => 'string',
 				'description' => __( 'The item modification date', 'tainacan' )
 			],
-			'url'               => [
-				'map'         => 'guid',
-				'title'       => __( 'Item URL', 'tainacan' ),
-				'type'        => 'string',
-				'description' => __( 'The item URL', 'tainacan' )
-			],
 			'terms'             => [
 				'map'         => 'terms',
 				'title'       => __( 'Term IDs', 'tainacan' ),
 				'type'        => 'array',
 				'description' => __( 'The item term IDs', 'tainacan' ),
 			],
-			'document_type'       => [
-                'map'        => 'meta',
-                'title'      => __('Document Type', 'tainacan'),
-                'type'       => 'string',
-                'description'=> __('The document type, can be a local attachment, an external URL or a text', 'tainacan'),
-                'on_error'   => __('Invalid document type', 'tainacan'),
-                'validation' => v::stringType()->in(['attachment', 'url', 'text']),
-                'default'    => 'attachment'
-            ],
-			'document'       => [
-                'map'        => 'meta',
-                'title'      => __('Document', 'tainacan'),
-                'type'       => 'string',
-                'description'=> __('The document itself. An ID in case of attachment, an URL in case of url or a text in the case of text', 'tainacan'),
-                'on_error'   => __('Invalid document', 'tainacan'),
-                'default'    => ''
-            ],
+			'document_type'     => [
+				'map'         => 'meta',
+				'title'       => __( 'Document Type', 'tainacan' ),
+				'type'        => 'string',
+				'description' => __( 'The document type, can be a local attachment, an external URL or a text', 'tainacan' ),
+				'on_error'    => __( 'Invalid document type', 'tainacan' ),
+				'validation'  => v::stringType()->in( [ 'attachment', 'url', 'text', 'empty' ] ),
+				'default'     => 'empty'
+			],
+			'document'          => [
+				'map'         => 'meta',
+				'title'       => __( 'Document', 'tainacan' ),
+				'type'        => 'string',
+				'description' => __( 'The document itself. An ID in case of attachment, an URL in case of link or a text in the case of text.', 'tainacan' ),
+				'on_error'    => __( 'Invalid document', 'tainacan' ),
+				'default'     => ''
+			],
+			'_thumbnail_id'     => [
+				'map'         => 'meta',
+				'title'       => __( 'Thumbnail', 'tainacan' ),
+				'description' => __( 'Squared reduced-size version of a picture that helps recognizing and organizing files', 'tainacan' )
+			],
+		    'comment_status'  => [
+		        'map'         => 'comment_status',
+		        'title'       => __( 'Comment Status', 'tainacan' ),
+		        'type'        => 'string',
+		        'description' => __( 'Item comment status: "open" means comments are allowed, "closed" means comments are not allowed.', 'tainacan' ),
+		        'default'     => get_default_comment_status(Entities\Collection::get_post_type()),
+		        'validation' => v::optional(v::stringType()->in( [ 'open', 'closed' ] )),
+		    ]
 		] );
 	}
 
@@ -144,11 +151,18 @@ class Items extends Repository {
 	 */
 	public function register_post_type() {
 
-        $Tainacan_Collections = \Tainacan\Repositories\Collections::get_instance();
-        $Tainacan_Taxonomies = \Tainacan\Repositories\Taxonomies::get_instance();
+		$Tainacan_Collections = \Tainacan\Repositories\Collections::get_instance();
+		$Tainacan_Taxonomies  = \Tainacan\Repositories\Taxonomies::get_instance();
 
 		$collections = $Tainacan_Collections->fetch( [], 'OBJECT' );
-		$taxonomies  = $Tainacan_Taxonomies->fetch( ['status' => ['auto-draft', 'draft', 'publish', 'private']], 'OBJECT' );
+		$taxonomies  = $Tainacan_Taxonomies->fetch( [
+			'status' => [
+				'auto-draft',
+				'draft',
+				'publish',
+				'private'
+			]
+		], 'OBJECT' );
 
 		if ( ! is_array( $collections ) ) {
 			return;
@@ -159,84 +173,20 @@ class Items extends Repository {
 			$collection->register_collection_item_post_type();
 		}
 
-		// register taxonomies
+		// register taxonomies 
 		if ( is_array( $taxonomies ) && sizeof( $taxonomies ) > 0 ) {
 			foreach ( $taxonomies as $taxonomy ) {
-				$taxonomy->register_taxonomy();
+				$taxonomy->tainacan_register_taxonomy();
 			}
 		}
+		
+		// register taxonomies to collections considering metadata inheritance
+		$Tainacan_Taxonomies->register_taxonomies_for_all_collections();
+		
 	}
 
 	public function insert( $item ) {
-
-		$is_update = false;
-		$diffs = [];
-		if ( $item->get_id() ) {
-
-			$old   = $item->get_repository()->fetch( $item->get_id() );
-
-			if($old->get_status() === 'auto-draft') {
-				$is_update = false;
-			} else {
-				$is_update = true;
-			}
-
-			$diffs = $this->diff($old, $item);
-		}
-
-		$map = $this->get_map();
-
-		// get collection to determine post type
-		$collection = $item->get_collection();
-
-		if ( !$collection ) {
-			return false;
-		}
-
-		$cpt = $collection->get_db_identifier();
-
-		// iterate through the native post properties
-		foreach ( $map as $prop => $mapped ) {
-			if ( $mapped['map'] != 'meta' && $mapped['map'] != 'meta_multi' && $mapped['map'] != 'terms' ) {
-				$item->WP_Post->{$mapped['map']} = $item->get_mapped_property( $prop );
-			}
-		}
-
-		// save post and get its ID
-		$item->WP_Post->post_type = $cpt;
-		//$item->WP_Post->post_status = 'publish';
-		
-		$this->clear_cache($this->get_name());
-		
-		$id            = wp_insert_post( $item->WP_Post );
-		$item->WP_Post = get_post( $id );
-
-		// Now run through properties stored as postmeta
-		foreach ( $map as $prop => $mapped ) {
-			if ( $mapped['map'] == 'meta' ) {
-				update_post_meta( $id, $prop, wp_slash( $item->get_mapped_property( $prop ) ) );
-			} elseif ( $mapped['map'] == 'meta_multi' ) {
-				$values = $item->get_mapped_property( $prop );
-
-				delete_post_meta( $id, $prop );
-
-				if ( is_array( $values ) ) {
-					foreach ( $values as $value ) {
-						add_post_meta( $id, $prop, wp_slash( $value ) );
-					}
-				}
-			}
-		}
-
-		if ( method_exists( $item, 'get_featured_img_id' ) ) {
-			set_post_thumbnail( $item->WP_Post, $item->get_featured_img_id( $item->WP_Post->ID ) );
-		}
-
-		do_action( 'tainacan-insert', $item, $diffs, $is_update );
-		do_action( 'tainacan-insert-Item', $item );
-
-		// return a brand new object
-		return new Entities\Item( $item->WP_Post );
+		return parent::insert( $item );
 	}
 
 	/**
@@ -246,6 +196,9 @@ class Items extends Repository {
 	 * to learn all args accepted in the $args parameter (@see https://developer.wordpress.org/reference/classes/wp_query/)
 	 * You can also use a mapped property, such as name and description, as an argument and it will be mapped to the
 	 * appropriate WP_Query argument
+	 * 
+	 * If a number is passed to $args, it will return a \Tainacan\Entities\Item object.  But if the post is not found or
+	 * does not match the entity post type, it will return an empty array
 	 *
 	 * The second paramater specifies from which collections item should be fetched.
 	 * You can pass the Collection ID or object, or an Array of IDs or collection objects
@@ -261,9 +214,14 @@ class Items extends Repository {
 		$Tainacan_Collections = \Tainacan\Repositories\Collections::get_instance();
 
 		if ( is_numeric( $args ) ) {
+			
 			$existing_post = get_post( $args );
 			if ( $existing_post instanceof \WP_Post ) {
-				return new Entities\Item( $existing_post );
+				try {
+					return new Entities\Item( $existing_post );
+				} catch (\Exception $e) {
+					return [];
+				}
 			} else {
 				return [];
 			}
@@ -271,7 +229,12 @@ class Items extends Repository {
 		}
 
 		if ( empty( $collections ) ) {
-			$collections = $Tainacan_Collections->fetch( [], 'OBJECT' );
+			$post_types = get_post_types();
+			$collections = array_map( function($el) use ($Tainacan_Collections) {
+				if ( $id = $Tainacan_Collections->get_id_by_db_identifier($el) ) {
+					return $id;
+				}
+			} , $post_types);
 		}
 
 		if ( is_numeric( $collections ) ) {
@@ -292,10 +255,9 @@ class Items extends Repository {
 					$collections_objects[] = $col;
 				}
 			}
-
 		}
-		foreach ( $collections_objects as $collection ) {
 
+		foreach ( $collections_objects as $collection ) {
 			/**
 			 * If no specific status is defined in the query, WordPress will fetch
 			 * public items and private items for users withe the correct permission.
@@ -324,6 +286,8 @@ class Items extends Repository {
 		$args = $this->parse_fetch_args( $args );
 
 		$args['post_type'] = $cpt;
+		
+		$args = apply_filters( 'tainacan_fetch_args', $args, 'items' );
 
 		$wp_query = $this->get_cache($this->get_name(), $args);
 		if (false === $wp_query) {
@@ -333,7 +297,7 @@ class Items extends Repository {
 
 		return $this->fetch_output( $wp_query, $output );
 	}
-	
+
 	/**
 	 * fetch items IDs based on WP_Query args
 	 *
@@ -350,9 +314,9 @@ class Items extends Repository {
 	 * @return Array array of IDs;
 	 */
 	public function fetch_ids( $args = [], $collections = [] ) {
-		
+
 		$args['fields'] = 'ids';
-		
+
 		return $this->fetch( $args, $collections )->get_posts();
 	}
 
@@ -360,68 +324,246 @@ class Items extends Repository {
 		return $this->insert( $object );
 	}
 
+
 	/**
-	 * @param $args ( is a array like [post_id, [is_permanently => bool]] )
+	 * allow wp query filter post by array of titles
 	 *
-	 * @return mixed|Entities\Item
+	 * @param $where
+	 * @param $wp_query
+	 *
+	 * @return string
 	 */
-	public function delete( $args ) {
-		if ( ! empty( $args[1] ) && $args[1] === true ) {
-			return new Entities\Item( wp_delete_post( $args[0], $args[1] ) );
+	public function title_in_posts_where( $where, $wp_query ) {
+		global $wpdb;
+		if ( $post_title_in = $wp_query->get( 'post_title_in' ) ) {
+			if ( is_array( $post_title_in ) && isset( $post_title_in['value'] ) ) {
+				$quotes = [];
+				foreach ( $post_title_in['value'] as $title ) {
+					$quotes[] = " $wpdb->posts.post_title  LIKE  '%" . esc_sql( $wpdb->esc_like( $title ) ) . "%'";
+				}
+			}
+
+			// retrieve only posts for the specified collection and status
+			$type   = " $wpdb->posts.post_type = '" . $wp_query->get( 'post_type' )[0] . "' ";
+			$status = " ( $wpdb->posts.post_status = 'publish' OR $wpdb->posts.post_status = 'private') ";
+			$where  .= ' ' . $post_title_in['relation'] . '( ( ' . implode( ' OR ', $quotes ) . ' ) AND ' .
+			           $status . ' AND  ' . $type . ' )';
 		}
 
-		return new Entities\Item( wp_trash_post( $args[0] ) );
+		return $where;
 	}
 
-    /**
-     * allow wp query filter post by array of titles
-     *
-     * @param $where
-     * @param $wp_query
-     * @return string
-     */
-    public function title_in_posts_where( $where, $wp_query ) {
-        global $wpdb;
-        if ( $post_title_in = $wp_query->get( 'post_title_in' ) ) {
-            if(is_array( $post_title_in ) && isset( $post_title_in['value']) ){
-                $quotes = [];
-                foreach ($post_title_in['value'] as $title) {
-                    $quotes[] = " $wpdb->posts.post_title  LIKE  '%" .   esc_sql( $wpdb->esc_like( $title ) ). "%'";
-                }
-            }
+	/**
+	 * allow wp query filter post by array of content
+	 *
+	 * @param $where
+	 * @param $wp_query
+	 *
+	 * @return string
+	 */
+	public function content_in_posts_where( $where, $wp_query ) {
+		global $wpdb;
+		if ( $post_content_in = $wp_query->get( 'post_content_in' ) ) {
+			if ( is_array( $post_content_in ) && isset( $post_content_in['value'] ) ) {
+				$quotes = [];
+				foreach ( $post_content_in['value'] as $title ) {
+					$quotes[] = " $wpdb->posts.post_content  LIKE  '%" . esc_sql( $wpdb->esc_like( $title ) ) . "%'";
+				}
+			}
 
-            // retrieve only posts for the specified collection and status
-            $type = " $wpdb->posts.post_type = '" . $wp_query->get( 'post_type' )[0]."' ";
-            $status = " ( $wpdb->posts.post_status = 'publish' OR $wpdb->posts.post_status = 'private') ";
-            $where .= ' '.$post_title_in['relation'] . '( ( ' .implode(' OR ', $quotes ) . ' ) AND ' .
-                $status . ' AND  ' . $type . ' )';
-        }
-        return $where;
-    }
+			// retrieve only posts for the specified collection and status
+			$type   = " $wpdb->posts.post_type = '" . $wp_query->get( 'post_type' )[0] . "' ";
+			$status = " ( $wpdb->posts.post_status = 'publish' OR $wpdb->posts.post_status = 'private') ";
+			$where  .= ' ' . $post_content_in['relation'] . '( ( ' . implode( ' OR ', $quotes ) . ' ) AND ' .
+			           $status . ' AND  ' . $type . ' )';
+		}
 
-    /**
-     * allow wp query filter post by array of content
-     *
-     * @param $where
-     * @param $wp_query
-     * @return string
-     */
-    public function content_in_posts_where( $where, $wp_query ) {
-        global $wpdb;
-        if ( $post_content_in = $wp_query->get( 'post_content_in' ) ) {
-            if(is_array( $post_content_in ) && isset( $post_content_in['value']) ){
-                $quotes = [];
-                foreach ($post_content_in['value'] as $title) {
-                    $quotes[] = " $wpdb->posts.post_content  LIKE  '%" .esc_sql( $wpdb->esc_like( $title ) ). "%'";
-                }
-            }
+		return $where;
+	}
+	
 
-            // retrieve only posts for the specified collection and status
-            $type = " $wpdb->posts.post_type = '" . $wp_query->get( 'post_type' )[0]."' ";
-            $status = " ( $wpdb->posts.post_status = 'publish' OR $wpdb->posts.post_status = 'private') ";
-            $where .= ' '.$post_content_in['relation'] . '( ( ' .implode(' OR ', $quotes ) . ' ) AND ' .
-                $status . ' AND  ' . $type . ' )';
-        }
-        return $where;
-    }
+	/**
+	 * Get a default thumbnail ID from the item document.
+	 *
+	 * @param  Entities\Item $item The item
+	 *
+	 * @return int|null           The thumbnail ID or null if it was not possible to find a thumbnail
+	 */
+	public function get_thumbnail_id_from_document( Entities\Item $item ) {
+		/**
+		 * Hook to get thumbnail from document
+		 */
+		$thumb_id = apply_filters( 'tainacan-get-thumbnail-id-from-document', null, $item );
+
+		if ( ! is_null( $thumb_id ) ) {
+			return $thumb_id;
+		}
+
+		if ( empty( $item->get_document() ) ) {
+			return null;
+		}
+
+		if ( $item->get_document_type() == 'attachment' ) {
+			if ( wp_attachment_is_image( $item->get_document() ) ) {
+				return $item->get_document();
+			} else {
+
+				$filepath      = get_attached_file( $item->get_document() );
+				$TainacanMedia = \Tainacan\Media::get_instance();
+				$thumb_blob    = $TainacanMedia->get_pdf_cover( $filepath );
+				if ( $thumb_blob ) {
+					$thumb_id = $TainacanMedia->insert_attachment_from_blob( $thumb_blob, basename( $filepath ) . '-cover.jpg' );
+
+					return $thumb_id;
+				}
+
+			}
+		} elseif ( $item->get_document_type() == 'url' ) {
+
+			$TainacanEmbed = \Tainacan\Embed::get_instance();
+			if ( $thumb_url = $TainacanEmbed->oembed_get_thumbnail( $item->get_document() ) ) {
+				$meta_key = '_' . $thumb_url . '__thumb';
+
+				$existing_thumb = get_post_meta( $item->get_id(), $meta_key, true );
+
+				if ( is_numeric( $existing_thumb ) ) {
+					return $existing_thumb;
+				} else {
+					$TainacanMedia = \Tainacan\Media::get_instance();
+					$thumb_id      = $TainacanMedia->insert_attachment_from_url( $thumb_url );
+					update_post_meta( $item->get_id(), $meta_key, $thumb_id );
+
+					return $thumb_id;
+				}
+			}
+
+		}
+
+		return $thumb_id;
+	}
+
+	/**
+	 * When updating an item document, set a default thumbnail to the item if it does not have one yet
+	 *
+	 * @param  Entities\Item $updated_item
+	 * @param  array $attributes The paramaters sent to the API
+	 *
+	 * @return void
+	 */
+	public function hook_api_updated_item( Entities\Item $updated_item, $attributes ) {
+		if ( array_key_exists( 'document', $attributes )
+		     && empty( $updated_item->get__thumbnail_id() )
+		     && ! empty( $updated_item->get_document() )
+		) {
+
+			$thumb_id = $this->get_thumbnail_id_from_document( $updated_item );
+
+			if ( ! is_null( $thumb_id ) ) {
+				set_post_thumbnail( $updated_item->get_id(), (int) $thumb_id );
+			}
+
+		}
+
+	}
+
+	/**
+	 * Return if comment are open for this item (post_id) and the collection too 
+	 * 
+	 * @param bool $open_comment
+	 * @param integer $post_id Item id
+	 * @return bool
+	 */
+	public function hook_comments_open($open_comment, $post_id) {
+	    $item = self::get_entity_by_post($post_id);
+	    
+	    if($item != false && $item instanceof Entities\Item) {
+    	    $collection = $item->get_collection();
+    	    if( $collection->get_allow_comments() !== 'open' ) return false;
+	    }
+	    
+	    return $open_comment;
+	}
+	
+	/**
+	 * Filter to handle special permissions
+	 *
+	 * @see https://developer.wordpress.org/reference/hooks/map_meta_cap/
+	 *
+	 */
+	public function map_meta_cap( $caps, $cap, $user_id, $args ) {
+
+		// Filters meta caps edit_tainacan-collection and check if user is moderator
+		
+		if ( $cap == 'read_post' && is_array( $args ) && array_key_exists( 0, $args ) ) { 
+			
+			$entity = $args[0];
+
+			if ( is_numeric( $entity ) || $entity instanceof Entities\Item ) {
+
+				if ( is_numeric( $entity ) ) {
+					$entity = $this->fetch( (int) $entity );
+				}
+
+				if ( $entity instanceof Entities\Item ) {
+					
+					$collection = $entity->get_collection();
+					
+					if ( $collection instanceof Entities\Collection ) {
+						$status_obj = get_post_status_object( $collection->get_status() );
+						if ( ! $status_obj->public ) {
+							$caps[] = $entity->get_capabilities()->read_private_posts;
+						}
+					}
+					
+					
+				}
+			}
+		}
+
+		return $caps;
+	}
+	
+	/**
+	 * Check if $user can read the item based on the colletion
+	 *
+	 * @param Entities\Entity $entity
+	 * @param int|\WP_User|null $user default is null for the current user
+	 *
+	 * @return boolean
+	 * @throws \Exception
+	 */
+	public function can_read( Entities\Entity $entity, $user = null ) {
+		
+		if ( ! $entity instanceof Entities\Item) {
+			throw new InvalidArgumentException('Items::can_read() expects an Item entity as the first parameter');
+		}
+		
+		// can read the item looking only to the item
+		$can_read = parent::can_read($entity, $user);
+		
+		if ( $can_read ) {
+			$collection = $entity->get_collection();
+			$status_obj = get_post_status_object( $collection->get_status() );
+			
+			if ( $status_obj->public ) {
+				return $can_read;
+			}
+		}
+		
+		if ( is_null($user) ) {
+			$user = get_current_user_id();
+		}
+		
+		if ( ! $user ) {
+			return false;
+		} elseif ( is_object( $user ) ) {
+			$user = $user->ID;
+		}
+		
+		$entity_cap = $entity->get_capabilities();
+		
+		return user_can( $user, $entity_cap->read_private_posts, $entity->get_id() );
+		
+	}
+
 }

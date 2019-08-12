@@ -1,77 +1,173 @@
 <template>
-    <nav 
-            id="primary-menu" 
-            :class="isCompressed ? 'is-compressed' : ''" 
-            role="navigation" 
-            :aria-label="$i18n.get('label_main_menu')" 
+    <nav
+            id="primary-menu"
+            :class="isMenuCompressed ? 'is-compressed' : ''"
+            role="navigation"
+            :aria-label="$i18n.get('label_main_menu')"
             class="column is-sidebar-menu">
         <aside class="menu">
-            <div class="menu-header">
-                <ul class="menu-list"><li>
-                    <router-link 
-                            tag="a" 
-                            to="/">
-                        <b-icon 
-                                size="is-medium" 
-                                icon="chevron-left"/>
-                        <img 
-                                class="tainacan-logo" 
-                                alt="Tainacan Logo" 
-                                :src="logoHeader">
-                    </router-link>
-                </li></ul> 
-            </div>
-            
+
             <ul class="menu-list">
-                <li><router-link 
-                        tag="a" 
-                        to="/collections" 
-                        :class="activeRoute == 'CollectionsPage' || isCompressed ? 'is-active':''">
-                    <b-icon 
-                            size="is-small" 
-                            icon="folder-multiple"/> <span class="menu-text">{{ $i18n.getFrom('collections', 'name') }}</span>
-                </router-link></li>
-                <li><router-link 
-                        tag="a" 
-                        to="/items" 
-                        :class="activeRoute == 'ItemsPage' ? 'is-active':''">
-                    <b-icon 
-                            size="is-small" 
-                            icon="file-multiple"/> <span class="menu-text">{{ $i18n.getFrom('items', 'name') }}</span>
-                </router-link></li>
+                <li class="repository-label"><span>{{ $i18n.get('repository') }}</span></li>
+                <li>
+                    <router-link
+                            tag="a"
+                            to="/collections"
+                            :class="activeRoute == 'CollectionsPage' || $route.params.collectionId != undefined ? 'is-active':''">
+                        <span
+                                v-tooltip="{                                     
+                                    offset: 4,
+                                    content: isMenuCompressed ? $i18n.getFrom('collections', 'name') : '',
+                                    autoHide: true,
+                                    classes: ['tooltip', 'repository-tooltip'],
+                                    placement: 'auto'
+                                }"
+                                class="icon">
+                            <i class="tainacan-icon tainacan-icon-20px tainacan-icon-collections"/>
+                        </span>
+                        <span class="menu-text">{{ $i18n.getFrom('collections', 'name') }}</span>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link
+                            tag="a"
+                            to="/items"
+                            :class="activeRoute == 'ItemsPage' ? 'is-active':''">
+                        <span
+                                v-tooltip="{                                     
+                                    offset: 4,
+                                    content: isMenuCompressed ? $i18n.getFrom('items', 'name') : '',
+                                    autoHide: true,
+                                    classes: ['tooltip', 'repository-tooltip'],
+                                    placement: 'auto'
+                                }"
+                                class="icon">
+                            <i class="tainacan-icon tainacan-icon-20px tainacan-icon-items"/>
+                        </span>
+                        <span class="menu-text">{{ $i18n.getFrom('items', 'name') }}</span>
+                    </router-link>
+                </li>
                 <li class="separator"/>
-                <li><router-link 
-                        tag="a" 
-                        to="/fields" 
-                        :class="activeRoute == 'FieldsPage' ? 'is-active':''">
-                    <b-icon 
-                            size="is-small" 
-                            icon="format-list-checks"/> <span class="menu-text">{{ $i18n.getFrom('fields', 'name') }}</span>
-                </router-link></li>
-                <li><router-link 
-                        tag="a" 
-                        to="/filters" 
-                        :class="activeRoute == 'FiltersPage' ? 'is-active':''">
-                    <b-icon 
-                            size="is-small" 
-                            icon="filter"/> <span class="menu-text">{{ $i18n.getFrom('filters', 'name') }}</span>
-                </router-link></li>
-                <li><router-link 
-                        tag="a" 
-                        to="/categories" 
-                        :class="activeRoute == 'CategoriesPage' ? 'is-active':''">
-                    <b-icon 
-                        size="is-small" 
-                        icon="shape"/> <span class="menu-text">{{ $i18n.getFrom('categories', 'name') }}</span>
-                </router-link></li>
-                <li><router-link 
-                        tag="a" 
-                        to="/events" 
-                        :class="activeRoute == 'EventsPage' ? 'is-active':''">
-                    <b-icon 
-                            size="is-small" 
-                            icon="bell"/> <span class="menu-text">{{ $i18n.get('events') }}</span>
-                </router-link></li>
+                <li>
+                    <router-link
+                            tag="a"
+                            to="/metadata"
+                            :class="activeRoute == 'MetadataPage' ? 'is-active':''">
+                        <span
+                                v-tooltip="{                                     
+                                    offset: 4,
+                                    content: isMenuCompressed ? $i18n.get('metadata') : '',
+                                    autoHide: true,
+                                    classes: ['tooltip', 'repository-tooltip'],
+                                    placement: 'auto'
+                                }"
+                                class="icon">
+                            <i class="tainacan-icon tainacan-icon-20px tainacan-icon-metadata"/>
+                        </span>
+                        <span class="menu-text">{{ $i18n.get('metadata') }}</span>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link
+                            tag="a"
+                            to="/filters"
+                            :class="activeRoute == 'FiltersPage' ? 'is-active':''">
+                        <span
+                                v-tooltip="{                                     
+                                    offset: 4,
+                                    content: isMenuCompressed ? $i18n.getFrom('filters', 'name') : '',
+                                    autoHide: true,
+                                    classes: ['tooltip', 'repository-tooltip'],
+                                    placement: 'auto'
+                                }"
+                                class="icon">
+                            <i class="tainacan-icon tainacan-icon-20px tainacan-icon-filters"/>
+                        </span>
+                        <span class="menu-text">{{ $i18n.getFrom('filters', 'name') }}</span>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link
+                            tag="a"
+                            to="/taxonomies"
+                            :class="activeRoute == 'Page' ? 'is-active':''">
+                        <span
+                                v-tooltip="{                                    
+                                    offset: 4,
+                                    content: isMenuCompressed ? $i18n.getFrom('taxonomies', 'name') : '',
+                                    autoHide: true,
+                                    classes: ['tooltip', 'repository-tooltip'],
+                                    placement: 'auto'
+                                }"
+                                class="icon">
+                            <i class="tainacan-icon tainacan-icon-20px tainacan-icon-taxonomies"/>
+                        </span>
+                        <span class="menu-text">{{ $i18n.getFrom('taxonomies', 'name') }}</span>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link
+                            tag="a"
+                            to="/activities"
+                            :class="activeRoute == 'ActivitiesPage' ? 'is-active':''">
+                        <span
+                                v-tooltip="{                                     
+                                    offset: 4,
+                                    content: isMenuCompressed ? $i18n.get('activities') : '',
+                                    autoHide: true,
+                                    classes: ['tooltip', 'repository-tooltip'],
+                                    placement: 'auto'
+                                }"
+                                class="icon">
+                            <i class="tainacan-icon tainacan-icon-20px tainacan-icon-activities"/>
+                        </span>
+                        <span class="menu-text">{{ $i18n.get('activities') }}</span>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link
+                            tag="a"
+                            to="/importers"
+                            :class="(
+                                activeRoute == 'AvailableImportersPage' ||
+                                activeRoute == 'ImporterEditionForm' ||
+                                activeRoute == 'ImporterCreationForm' ||
+                                activeRoute == 'ImporterMappingForm' ) ? 'is-active':''">
+                        <span
+                                v-tooltip="{                                     
+                                    offset: 4,
+                                    content: isMenuCompressed ? $i18n.get('importers') : '',
+                                    autoHide: true,
+                                    classes: ['tooltip', 'repository-tooltip'],
+                                    placement: 'auto'
+                                }"
+                                class="icon">
+                            <i class="tainacan-icon tainacan-icon-20px tainacan-icon-importers"/>
+                        </span>
+                        <span class="menu-text menu-text-import">{{ $i18n.get('importers') }}</span>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link
+                            tag="a"
+                            to="/exporters"
+                            :class="(
+                                activeRoute == 'ExportersPage' ||
+                                activeRoute == 'ExporterEditionForm') ? 'is-active':''">
+                        <span
+                                v-tooltip="{
+                                    offset: 4,
+                                    content: isMenuCompressed ? $i18n.get('exporters') : '',
+                                    autoHide: true,
+                                    classes: ['tooltip', 'repository-tooltip'],
+                                    placement: 'auto'
+                                }"
+                                class="icon">
+                            <i class="tainacan-icon tainacan-icon-20px tainacan-icon-export"/>
+                        </span>
+                        <span class="menu-text">{{ $i18n.get('exporters') }}</span>
+                    </router-link>
+                </li>
             </ul>
         </aside>
     </nav>
@@ -80,22 +176,9 @@
 <script>
 export default {
     name: 'PrimaryMenu',
-    data(){
-        return {
-            logoHeader: tainacan_plugin.base_url + '/admin/images/tainacan_logo_header.png',
-            isCompressed: false,
-            activeRoute: '/collections'
-        }
-    },
-    watch: {
-        '$route' (to) {
-            this.isCompressed = (to.params.collectionId != undefined);
-            this.activeRoute = to.name;
-        }
-    },
-    created () {
-        this.isCompressed = (this.$route.params.collectionId != undefined);
-        this.activeRoute = this.$route.name;
+    props: {
+        isMenuCompressed: false,
+        activeRoute: '/collections'
     }
 }
 </script>
@@ -105,151 +188,109 @@ export default {
     @import "../../scss/_variables.scss";
 
     #primary-menu {
-        background-color: $secondary;
-        padding: 0px; 
+        background-color: $blue4;
+        padding: 52px 0px 0px 0px;
         -webkit-transition: max-width 0.2s linear; /* Safari */
-        transition: max-width 0.2s linear; 
+        transition: max-width 0.2s linear;
         max-width: $side-menu-width;
         z-index: 99;
 
-        .menu-header {
-            background-color: rgba(0,0,0,0.1);
-            height: $header-height; 
-            a { padding: 1.45em 2.5em }
-            .icon {
-                position: absolute;
-                opacity: 0;
-                visibility: hidden;
-                transition: opacity 0.2s linear, visibility 0.2s linear;
-                -webkit-transition: opacity 0.2s linear, visibility 0.2s linear;  
-            }
-            .tainacan-logo {
-                max-height: 28px;
-                opacity: 1;
-                visibility: visible;
-                transition: opacity 0.15s linear, visibility 0.15s linear;
-                -webkit-transition: opacity 0.15s linear, visibility 0.15s linear;
-            }
+        a:hover {
+            text-decoration: none;
+        }
+
+        .menu {
+            padding-top: 0px;
+        }
+        .repository-label {
+            background-color: $blue5;
+            font-weight: bold;
+            font-size: 16px;
+            text-transform: uppercase;
+            color: white;
+            padding: 11px;
+            text-align: center;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.2s linear, visibility 0.2s linear;
+            -webkit-transition: opacity 0.2s linear, visibility 0.2s linear;
         }
         .separator {
             height: 2px;
-            background-color: $separator-color;
+            background-color: transparent;
             width: 100%;
-            margin: 1.75em 0;
+            margin: 24px 0;
         }
-        li{
-            &.search-area {
-                visibility: visible;
-                opacity: 1;
-                padding-top: 1.8em;
-                .field { padding: 0 1.8em 0.5em; }
-                .menu-text { font-size: 0.85em; }
-            }
+        li {
             a {
                 color: white;
                 white-space: nowrap;
                 overflow: hidden;
-                padding: 0.75em 1.8em;
+                padding: 9px 15px;
                 line-height: 1.5em;
                 border-radius: 0px;
                 -webkit-transition: padding 0.2s linear; /* Safari */
-                transition: padding 0.2s linear; 
+                transition: padding 0.2s linear;
+
+                .icon {
+                    height: auto;
+                    width: auto;
+                    // i, i::before {
+                    //     font-size: 18px !important;
+                    // }
+                }
             }
-            a:hover {
-                background-color: $primary;
-                color: $tertiary
+
+            a:hover, a.is-active {
+                background-color: $blue3;
             }
-            a.is-active {
-                background-color: $primary;
-                color: $tertiary;
+            a:focus {
+                box-shadow: none;
             }
             .menu-text {
                 padding-left: 0.7em;
                 opacity: 1;
+                top: 1px;
+                position: relative;
                 visibility: visible;
                 transition: opacity 0.2s linear, visibility 0.2s linear;
                 -webkit-transition: opacity 0.2s linear, visibility 0.2s linear;
             }
+            .menu-text-import {
+                position: relative;
+                top: 1px;
+            }
         }
 
         &.is-compressed {
-            max-width: 42px;
-
-            .menu-header {
-                a { padding: 1.67em 0.3em }
-                .icon {
-                    visibility: visible; 
-                    opacity: 1;
-                }   
-                .tainacan-logo {   
-                    visibility: hidden; 
-                    opacity: 0;
-                }
-            }
-            .search-area {   
-                visibility: hidden; 
+            max-width: 50px;
+            .menu-text, .repository-label>span {
+                visibility: hidden;
                 opacity: 0;
             }
-            a { 
-                padding-left: 0.8em;
-                padding-right: 0.8em;
-                color: rgba(255,255,255,0.4);
-            }
-            .menu-text {   
-                visibility: hidden; 
-                opacity: 0;
-            }
-            box-shadow: -3px 0px 10px #111;
-            z-index: 10;
         }
 
         @media screen and (max-width: 769px) {
             width: 100% !important;
-            max-width: 100% !important; 
-            
-            .menu-header {
-                height: 60px;
-            }
+            max-width: 100% !important;
+            padding-top: 52px;
 
-            ul { 
+            .menu {
+                padding-top: 0px;
+            }
+            ul {
                 flex-flow: wrap;
                 display: flex;
                 align-items: stretch;
-                justify-content: space-evenly; 
-                .separator { display: none; }
-                .search-area { 
-                    flex-basis: 100%; 
-                    padding-top: 1.0em !important;
-                    .field {
-                        padding: 0 0.8em !important;
-                        margin-bottom: 0px;
-                    }
+                justify-content: space-evenly;
+                .separator, .repository-label {
+                    display: none;
                 }
-                a{ 
+                a {
                     padding: 0.8em !important;
                     text-align: center;
                 }
-                li + li {
-                    .menu-text{
-                        display: none !important;
-                    }     
-                }
-            }
-
-            &.is-compressed {
-
-                .menu-header {
-                    .icon {
-                        visibility: hidden !important; 
-                        opacity: 0 !important;
-                    }   
-                    .tainacan-logo {   
-                        visibility: visible !important; 
-                        opacity: 1 !important;
-                    }
-                    
-                }
-                .search-area { 
+                .menu-text {
                     display: none;
                 }
             }

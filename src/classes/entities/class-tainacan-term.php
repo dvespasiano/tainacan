@@ -14,6 +14,7 @@ class Term extends Entity {
         $parent,
         $description,
         $user,
+		$header_image_id,
         $taxonomy;
 
 
@@ -51,20 +52,22 @@ class Term extends Entity {
     }
 
 	public function  __toString(){
-		return 'Hello, my name is '. $this->get_name();
+		return apply_filters("tainacan-term-to-string", $this->get_name(), $this);
 	}
 
-	public function __toArray(){
-		$term_array = parent::__toArray();
+	public function _toArray(){
+		$term_array = parent::_toArray();
 
 		$term_id = $term_array['term_id'];
 
 		unset($term_array['term_id']);
 		unset($term_array['status']);
 
-		$term_array['id'] = $term_id;
+		$term_array['id']           = $term_id;
+		$term_array['header_image'] = $this->get_header_image();
+		$term_array['url']          = get_term_link( $this->get_id() );
 
-		return $term_array;
+		return apply_filters('tainacan-term-to-array', $term_array, $this);
 	}
 
     // Getters
@@ -125,6 +128,22 @@ class Term extends Entity {
 	function get_taxonomy() {
         return $this->get_mapped_property('taxonomy');
     }
+	
+	/**
+	 * Get Header Image ID attribute
+	 *
+	 * @return string
+	 */
+	function get_header_image_id() {
+		return $this->get_mapped_property( 'header_image_id' );
+	}
+
+	/**
+	 * @return false|string
+	 */
+	function get_header_image(){
+		return wp_get_attachment_url( $this->get_header_image_id() );
+	}
 
     // Setters
 
@@ -173,6 +192,17 @@ class Term extends Entity {
         $this->set_mapped_property('taxonomy', $value);
     }
 	
+	/**
+	 * Set Header Image ID
+	 *
+	 * @param [string] $value
+	 *
+	 * @return void
+	 */
+	function set_header_image_id( $value ) {
+		$this->set_mapped_property( 'header_image_id', $value );
+	}
+	
 	
 	/**
 	 *
@@ -187,45 +217,24 @@ class Term extends Entity {
 		$parent = $this->get_parent();
 		$name = $this->get_name();
 		$taxonomy = $this->get_taxonomy();
-
-		/**
-		 * Code from WordPress Core, taxonomy.php#2070
-		 */
-
-		/*
-		* Prevent the creation of terms with duplicate names at the same level of a taxonomy hierarchy,
-		* unless a unique slug has been explicitly provided.
-		*/
-		$name_matches = get_terms( $taxonomy, array(
-			'name' => $name,
-			'hide_empty' => false,
-			'parent' => $parent,
-		) );
-
-		/*
-		* The `name` match in `get_terms()` doesn't differentiate accented characters,
-		* so we do a stricter comparison here.
-		*/
-		$name_match = null;
-		if ( $name_matches ) {
-			foreach ( $name_matches as $_match ) {
-				if ( is_object($_match) && isset($_match) && strtolower( $name ) === strtolower( $_match->name ) ) {
-					$name_match = $_match;
-					break;
-				}
+		
+		$repo = $this->get_repository();
+		
+		$term_exists = $repo->term_exists($name, $taxonomy, $parent, true);
+		
+		if (false !== $term_exists) {
+			if ($this->get_id() != $term_exists->term_id) {
+				$this->add_error( 'name', __('You can not have two terms with the same name at the same level', 'tainacan') );
+				return false;
 			}
 		}
 
-		if ($name_match) {
-			$this->add_error( 'repeated', __('You can not have two terms with the same name at the same level', 'tainacan') );
-			return false; 
-		}
-
+		$this->set_as_valid();
 		return true;
 
 	}
 
-	public function __toHtml() {
+	public function _toHtml() {
 		
 		$return = '';
 		$id = $this->get_id();
@@ -244,7 +253,7 @@ class Term extends Entity {
 			
 		}
 
-		return $return;
+		return apply_filters('tainacan-term-to-html', $return, $this);
 		
 	}
 }

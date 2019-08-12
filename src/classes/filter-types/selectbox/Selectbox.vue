@@ -1,99 +1,150 @@
 <template>
-    <div class="block">
+    <div 
+            :class="{ 'skeleton': isLoadingOptions }"
+            class="block">
         <b-select
-                :id = "id"
-                :laoding = "isLoading"
-                v-model = "selected"
-                @input = "onSelect()"
+                v-if="!isLoadingOptions"
+                :value="selected"
+                :aria-labelledby="labelId"
+                @input="onSelect($event)"
+                :placeholder="$i18n.get('label_selectbox_init')"
                 expanded>
             <option value="">{{ $i18n.get('label_selectbox_init') }}...</option>
             <option
                     v-for="(option, index) in options"
                     :key="index"
                     :label="option.label"
-                    :value="option.value"
-                    border>{{ option.label }}</option>
+                    :value="option.value">
+                {{ option.label }}
+                <span 
+                        v-if="option.total_items != undefined"
+                        class="has-text-gray">{{ "(" + option.total_items + ")" }}</span>    
+            </option>
         </b-select>
     </div>
 </template>
 
 <script>
-    import { tainacan as axios } from '../../../js/axios/axios';
+    import { tainacan as axios, isCancel } from '../../../js/axios/axios';
     import { filter_type_mixin } from '../filter-types-mixin'
 
     export default {
         created(){
             this.collection = ( this.collection_id ) ? this.collection_id : this.filter.collection_id;
-            this.field = ( this.field_id ) ? this.field_id : this.filter.field.field_id;
+            this.metadatum = ( this.metadatum_id ) ? this.metadatum_id : this.filter.metadatum.metadatum_id;
             const vm = this;
-            axios.get('/collection/' + this.collection + '/fields/' +  this.field )
+
+            let in_route = '/collection/' + this.collection + '/metadata/' +  this.metadatum;
+
+            if(this.isRepositoryLevel || this.collection == 'filter_in_repository'){
+                in_route = '/metadata/'+ this.metadatum;
+            }
+
+            axios.get(in_route)
                 .then( res => {
                     let result = res.data;
-                    if( result && result.field_type ){
-                        vm.field_object = result;
-                        vm.type = result.field_type;
-                        vm.loadOptions();
+                    if( result && result.metadata_type ){
+                        vm.metadatum_object = result;
+                        vm.type = result.metadata_type;
+                        
+                        if (!this.isUsingElasticSearch)
+                            vm.loadOptions();
                     }
                 })
                 .catch(error => {
-                    this.$console.log(error);
+                    this.$console.error(error);
                 });
+            
+            this.$eventBusSearch.$on('removeFromFilterTag', this.cleanSearchFromTags);
+
+            if (this.isUsingElasticSearch) {
+                this.$eventBusSearch.$on('isLoadingItems', isLoading => {
+                    this.isLoadingOptions = isLoading;
+                });
+            }
+        },
+        props: {
+            isRepositoryLevel: Boolean,
+            labelId: String
         },
         data(){
             return {
-                isLoading: false,
                 options: [],
                 type: '',
                 collection: '',
-                field: '',
-                selected: '',
+                metadatum: ''
             }
         },
         mixins: [filter_type_mixin],
-        methods: {
-            loadOptions(){
-                let promise = null;
-                this.isLoading = true;
-                let instance = this;
-
-                if ( this.type === 'Tainacan\\Field_Types\\Relationship' ) {
-                    let collectionTarget = ( this.field_object && this.field_object.field_type_options.collection_id ) ?
-                        this.field_object.field_type_options.collection_id : this.collection_id;
-                    promise = this.getValuesRelationship( collectionTarget );
-
-                } else {
-                    promise = this.getValuesPlainText( this.field );
-                }
-
-                promise.then(() => {
-                    this.isLoading = false;
-                    instance.selectedValues();
-                })
-                .catch( error => {
-                    this.$console.log('error select', error );
-                    this.isLoading = false;
-                });
-            },
-            onSelect(){
-                this.$emit('input', {
-                    filter: 'selectbox',
-                    field_id: this.field,
-                    collection_id: ( this.collection_id ) ? this.collection_id : this.filter.collection_id,
-                    value: this.selected
-                });
-            },
-            selectedValues(){
-                if ( !this.query || !this.query.metaquery || !Array.isArray( this.query.metaquery ) )
-                    return false;
-
-                let index = this.query.metaquery.findIndex(newField => newField.key === this.field );
-                if ( index >= 0){
-                    let metadata = this.query.metaquery[ index ];
-                    this.selected = metadata.value;
-                } else {
-                    return false;
+        watch: {
+            selected(value) {
+                if (value) {
+                    this.$eventBusSearch.$emit( 'sendValuesToTags', {
+                        filterId: this.filter.id,
+                        value: value
+                    });
                 }
             }
+        },
+        computed: {
+            selected() {
+                if ( this.query && this.query.metaquery && Array.isArray( this.query.metaquery ) ) {
+
+                    let index = this.query.metaquery.findIndex(newMetadatum => newMetadatum.key === this.metadatum );
+                    if ( index >= 0){
+                        let metadata = this.query.metaquery[ index ];
+                        return metadata.value;
+                    }
+                }
+                return undefined;
+            }
+        }, 
+        methods: {
+            loadOptions(){
+                // Cancels previous Request
+                if (this.getOptionsValuesCancel != undefined)
+                    this.getOptionsValuesCancel.cancel('Facet search Canceled.');
+
+                let promise = null;
+                promise = this.getValuesPlainText( this.metadatum, null, this.isRepositoryLevel );
+                promise.request
+                    .then(() => {
+                    })
+                    .catch( error => {
+                        if (isCancel(error))
+                            this.$console.log('Request canceled: ', error.message);
+                        else
+                            this.$console.error( error );
+                    });
+
+                // Search Request Token for cancelling
+                this.getOptionsValuesCancel = promise.source;
+            },
+            onSelect(value){
+                //this.selected = value;
+                this.$emit('input', {
+                    filter: 'selectbox',
+                    metadatum_id: this.metadatum,
+                    collection_id: ( this.collection_id ) ? this.collection_id : this.filter.collection_id,
+                    value: ( value ) ? value : ''
+                });
+            },
+            cleanSearchFromTags(filterTag) {
+                if (filterTag.filterId == this.filter.id)
+                    this.onSelect();
+            }
+        },
+        beforeDestroy() {
+            this.$eventBusSearch.$off('removeFromFilterTag', this.cleanSearchFromTags);
+
+            if (this.isUsingElasticSearch)
+                this.$eventBusSearch.$off('isLoadingItems');
         }
     }
 </script>
+
+<style scoped>
+    .skeleton {
+        min-height: 36px;
+    }
+</style>

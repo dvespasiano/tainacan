@@ -19,7 +19,17 @@ last-package-build.md5
 src/admin/scss/.sass-cache
 src/assets/css/tainacan-admin.css
 src/assets/css/tainacan-admin.css.map
+src/assets/report.html
 cypress/videos
 cypress/screenshots
 .vscode
 src/pdf-viewer/pdfjs-dist
+report.txt
+.tmp
+src/assets/css/tainacan-embeds.css
+src/assets/css/tainacan-embeds.css.map
+demosaved.csv
+.DS_Store
+src/.DS_Store
+src/assets/css/tainacan-gutenberg-block-dynamic-items-list.css
+src/assets/css/tainacan-gutenberg-block-dynamic-items-list.css.map

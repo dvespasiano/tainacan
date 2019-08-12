@@ -12,7 +12,7 @@ class Collection extends Entity {
     protected
         $diplay_name,
         $full,
-        $featured_img_id,
+        $_thumbnail_id,
         $modification_date,
         $creation_date,
         $author_id,
@@ -25,12 +25,17 @@ class Collection extends Entity {
         $default_order,
         $default_orderby,
         $columns,
-        $default_view_mode,
-        $fields_order,
+		$default_view_mode,
+		$enabled_view_modes,
+        $metadata_order,
         $filters_order,
         $enable_cover_page,
         $cover_page_id,
-        $moderators_ids;
+        $header_image_id,
+	    $header_image,
+        $moderators_ids,
+        $comment_status,
+        $allow_comments;
 
     /**
 	 * {@inheritDoc}
@@ -60,18 +65,20 @@ class Collection extends Entity {
 	static $db_identifier_sufix = '_item';
 
 	public function __toString() {
-		return 'Hello, my name is ' . $this->get_name();
+		return apply_filters("tainacan-collection-to-string", $this->get_name(), $this);
 	}
 
-	public function __toArray() {
-		$array_collection = parent::__toArray();
+	public function _toArray() {
+		$array_collection = parent::_toArray();
 
-		$array_collection['featured_image']  = $this->get_featured_image();
-		$array_collection['featured_img_id'] = $this->get_featured_img_id();
-		$array_collection['attachments']     = $this->get_attachments();
-		$array_collection['author_name']     = $this->get_author_name();
+		$array_collection['thumbnail']         = $this->get_thumbnail();
+		$array_collection['header_image']      = $this->get_header_image();
+		$array_collection['author_name']       = $this->get_author_name();
+		$array_collection['url']               = get_permalink( $this->get_id() );
+		$array_collection['creation_date']     = $this->get_date_i18n( explode( ' ', $array_collection['creation_date'] )[0] );
+		$array_collection['modification_date'] = $this->get_date_i18n( explode( ' ', $array_collection['modification_date'] )[0] );
 
-		return $array_collection;
+		return apply_filters('tainacan-collection-to-array', $array_collection, $this);
 	}
 
 	/**
@@ -98,6 +105,7 @@ class Collection extends Entity {
 		$args = array(
 			'labels'              => $cpt_labels,
 			'hierarchical'        => true,
+			'description'		  => $this->get_description(),
 			//'supports'          => array('title'),
 			//'taxonomies'        => array(self::TAXONOMY),
 			'public'              => true,
@@ -115,13 +123,15 @@ class Collection extends Entity {
 			],
 			'map_meta_cap'        => true,
 			'capabilities'        => (array) $capabilities,
+			'show_in_nav_menus'   => false,
 			'supports'            => [
 				'title',
 				'editor',
 				'thumbnail',
 				'revisions',
 				'page-attributes',
-				'post-formats'
+				'post-formats',
+			    'comments'
 			]
 		);
 
@@ -153,67 +163,78 @@ class Collection extends Entity {
 	}
 
 	/**
+	 * @param null $exclude
+	 *
 	 * @return array
 	 */
-	function get_attachments() {
+	function get_attachments($exclude = null) {
 		$collection_id = $this->get_id();
+
+		if(!$exclude){
+			$to_exclude = get_post_thumbnail_id( $collection_id );
+		} else {
+			$to_exclude = $exclude;
+		}
 
 		$attachments_query = [
 			'post_type'     => 'attachment',
-			'post_per_page' => - 1,
+			'post_per_page' => -1,
 			'post_parent'   => $collection_id,
-			'exclude'       => get_post_thumbnail_id( $collection_id )
+			'exclude'       => $to_exclude
 		];
 
 		$attachments = get_posts( $attachments_query );
 
-		$attachments_prepared = [];
-		if ( $attachments ) {
-			foreach ( $attachments as $attachment ) {
-				$prepared = [
-					'id'          => $attachment->ID,
-					'title'       => $attachment->post_title,
-					'description' => $attachment->post_content,
-					'mime_type'   => $attachment->post_mime_type,
-					'url'         => $attachment->guid,
-				];
-
-				array_push( $attachments_prepared, $prepared );
-			}
-		}
-
-		return $attachments_prepared;
+		return apply_filters("tainacan-collection-get-attachments", $attachments, $exclude, $this);
 	}
 
     /**
 	 * @return string
 	 */
 	function get_author_name() {
-		return get_the_author_meta( 'display_name', $this->get_author_id() );
+		$name = get_the_author_meta( 'display_name', $this->get_author_id() );
+		return apply_filters("tainacan-collection-get-author-name", $name, $this);
+	}
+
+	/**
+	 * @return array
+	 */
+	function get_thumbnail() {
+
+		$sizes = get_intermediate_image_sizes();
+
+        array_unshift($sizes, 'full');
+        
+        foreach ( $sizes as $size ) {
+            $thumbs[$size] = wp_get_attachment_image_src( $this->get__thumbnail_id(), $size );
+        }
+
+		return apply_filters("tainacan-collection-get-thumbnail", $thumbs, $this);
 	}
 
 	/**
 	 * @return false|string
 	 */
-	function get_featured_image() {
-		return get_the_post_thumbnail_url( $this->get_id(), 'full' );
+	function get_header_image(){
+		$header_image = wp_get_attachment_url( $this->get_header_image_id() );
+		return apply_filters("tainacan-collection-get-header-image", $header_image, $this);
 	}
 
 	/**
 	 * @param $id
 	 */
-	function set_featured_img_id( $id ) {
-		$this->set_mapped_property( 'featured_img_id', $id );
+	function set__thumbnail_id( $id ) {
+		$this->set_mapped_property( '_thumbnail_id', $id );
 	}
 
 	/**
 	 * @return int|string
 	 */
 
-	function get_featured_img_id() {
-        $featured_img_id = $this->get_mapped_property("featured_img_id");
-        if ( isset( $featured_img_id ) ) {
-            return $featured_img_id;
+	function get__thumbnail_id() {
+        $_thumbnail_id = $this->get_mapped_property("_thumbnail_id");
+        if ( isset( $_thumbnail_id ) ) {
+            return $_thumbnail_id;
         }
 
 		return get_post_thumbnail_id( $this->get_id() );
@@ -315,8 +336,8 @@ class Collection extends Entity {
 	 *
 	 * @return string
 	 */
-	function get_columns() {
-		return $this->get_mapped_property( 'columns' );
+	function get_default_displayed_metadata() {
+		return $this->get_mapped_property( 'default_displayed_metadata' );
 	}
 
 	/**
@@ -329,12 +350,21 @@ class Collection extends Entity {
 	}
 
 	/**
-	 * Get collection fields ordination
+	 * Get collection enabled_view_modes option
 	 *
 	 * @return string
 	 */
-	function get_fields_order() {
-		return $this->get_mapped_property( 'fields_order' );
+	function get_enabled_view_modes() {
+		return $this->get_mapped_property( 'enabled_view_modes' );
+	}
+
+	/**
+	 * Get collection metadata ordination
+	 *
+	 * @return string
+	 */
+	function get_metadata_order() {
+		return $this->get_mapped_property( 'metadata_order' );
 	}
 	
 	/**
@@ -344,6 +374,15 @@ class Collection extends Entity {
 	 */
 	function get_enable_cover_page() {
 		return $this->get_mapped_property( 'enable_cover_page' );
+	}
+	
+	/**
+	 * Get Header Image ID attribute
+	 *
+	 * @return string
+	 */
+	function get_header_image_id() {
+		return $this->get_mapped_property( 'header_image_id' );
 	}
 	
 	/**
@@ -394,19 +433,69 @@ class Collection extends Entity {
 	}
 
 	/**
-	 * Get collection field.
+	 * Get collection metadatum.
 	 *
-	 * Returns an array of \Entity\Field objects, representing all the field of the collection.
+	 * Returns an array of \Entity\Metadatum objects, representing all the metadatum of the collection.
 	 *
-	 * @see \Tainacan\Repositories\Fields->fetch()
+	 * @see \Tainacan\Repositories\Metadata->fetch()
 	 *
-	 * @return [\Tainacan\Entities\Field] array
+	 * @return [\Tainacan\Entities\Metadatum] array
 	 * @throws \Exception
 	 */
-	function get_fields() {
-		$Tainacan_Fields = \Tainacan\Repositories\Fields::get_instance();
+	function get_metadata() {
+		$Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
 
-		return $Tainacan_Fields->fetch_by_collection( $this, [], 'OBJECT' );
+		return $Tainacan_Metadata->fetch_by_collection( $this, [], 'OBJECT' );
+	}
+
+	/**
+	 * Get the two core metadata of the collection (title and description)
+	 * 
+	 * @return array[\Tainacan\Entities\Metadatum]
+	 */
+	function get_core_metadata() {
+		$repo = \Tainacan\Repositories\Metadata::get_instance();
+
+		return $repo->get_core_metadata($this);
+
+	}
+
+	/**
+	 * Get the Core Title Metadatum for this collection
+	 * 
+	 * @return \Tainacan\Entities\Metadatum The Core Title Metadatum
+	 */
+	function get_core_title_metadatum() {
+		$repo = \Tainacan\Repositories\Metadata::get_instance();
+
+		return $repo->get_core_title_metadatum($this);
+	}
+
+	/**
+	 * Get the Core Description Metadatum for this collection
+	 * 
+	 * @return \Tainacan\Entities\Metadatum The Core Description Metadatum
+	 */
+	function get_core_description_metadatum() {
+		$repo = \Tainacan\Repositories\Metadata::get_instance();
+
+		return $repo->get_core_description_metadatum($this);
+	}
+	
+	/**
+	 * Checks if comments are allowed for the current Collection.
+	 * @return string "open"|"closed"
+	 */
+	public function get_comment_status() {
+	    return $this->get_mapped_property('comment_status');
+	}
+	
+	/**
+	 * Checks if comments are allowed for the current Collection Items.
+	 * @return bool
+	 */
+	public function get_allow_comments() {
+	    return $this->get_mapped_property('allow_comments');
 	}
 
 	/**
@@ -495,12 +584,12 @@ class Collection extends Entity {
 	/**
 	 * Set collection columns option
 	 *
-	 * @param [string] $value
+	 * @param array $value
 	 *
 	 * @return void
 	 */
-	function set_columns( $value ) {
-		$this->set_mapped_property( 'columns', $value );
+	function set_default_displayed_metadata( $value ) {
+		$this->set_mapped_property( 'default_displayed_metadata', $value );
 	}
 
 	/**
@@ -515,14 +604,25 @@ class Collection extends Entity {
 	}
 
 	/**
-	 * Set collection fields ordination
+	 * Set collection enabled_view_modes option
+	 *
+	 * @param [array] $value
+	 *
+	 * @return void
+	 */
+	function set_enabled_view_modes( $value ) {
+		$this->set_mapped_property( 'enabled_view_modes', $value );
+	}
+
+	/**
+	 * Set collection metadata ordination
 	 *
 	 * @param [string] $value
 	 *
 	 * @return void
 	 */
-	function set_fields_order( $value ) {
-		$this->set_mapped_property( 'fields_order', $value );
+	function set_metadata_order( $value ) {
+		$this->set_mapped_property( 'metadata_order', $value );
 	}
 
 	/**
@@ -557,6 +657,17 @@ class Collection extends Entity {
 	function set_cover_page_id( $value ) {
 		$this->set_mapped_property( 'cover_page_id', $value );
 	}
+	
+	/**
+	 * Set Header Image ID
+	 *
+	 * @param [string] $value
+	 *
+	 * @return void
+	 */
+	function set_header_image_id( $value ) {
+		$this->set_mapped_property( 'header_image_id', $value );
+	}
 
 	/**
 	 * Set collection moderators ids
@@ -566,7 +677,35 @@ class Collection extends Entity {
 	 * @return void
 	 */
 	function set_moderators_ids( $value ) {
+	    if(!is_array($value)) {
+	        if(empty($value)) {
+                $value = [];
+	        } else {
+                throw new \Exception('moderators_ids must be a array of users ids');
+	        }
+	    }
+		// make sure you never have duplicated moderators 
+		$value = array_unique($value);
+		
 		$this->set_mapped_property( 'moderators_ids', $value );
+	}
+	
+	/**
+	 * Sets if comments are allowed for the current Collection.
+	 * 
+	 * @param $value string "open"|"closed"
+	 */
+	public function set_comment_status( $value ) {
+	    $this->set_mapped_property('comment_status', $value);
+	}
+	
+	/**
+	 * Sets if comments are allowed for the current Collection Items.
+	 *
+	 * @param $value bool
+	 */
+	public function set_allow_comments( $value ) {
+	    $this->set_mapped_property('allow_comments', $value );
 	}
 
 	// Moderators methods

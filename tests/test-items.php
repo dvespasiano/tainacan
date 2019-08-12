@@ -24,6 +24,7 @@ class Items extends TAINACAN_UnitTestCase {
 			'collection',
 			array(
 				'name'   => 'testePerm',
+				'status' => 'publish'
 			),
 			true
 		);
@@ -92,35 +93,35 @@ class Items extends TAINACAN_UnitTestCase {
 		    true
 	    );
 
-	    $field = $this->tainacan_entity_factory->create_entity(
-		    'field',
+	    $metadatum = $this->tainacan_entity_factory->create_entity(
+		    'metadatum',
 		    array(
 			    'name'   => 'metadado',
 			    'status' => 'publish',
 			    'collection' => $collection,
-			    'field_type'  => 'Tainacan\Field_Types\Text',
+			    'metadata_type'  => 'Tainacan\Metadata_Types\Text',
 		    ),
 		    true
 	    );
 
-	    $field2 = $this->tainacan_entity_factory->create_entity(
-		    'field',
+	    $metadatum2 = $this->tainacan_entity_factory->create_entity(
+		    'metadatum',
 		    array(
 			    'name'   => 'metadado2',
 			    'status' => 'publish',
 			    'collection' => $collection,
-			    'field_type'  => 'Tainacan\Field_Types\Text',
+			    'metadata_type'  => 'Tainacan\Metadata_Types\Text',
 		    ),
 		    true
 	    );
 
-	    $field3 = $this->tainacan_entity_factory->create_entity(
-		    'field',
+	    $metadatum3 = $this->tainacan_entity_factory->create_entity(
+		    'metadatum',
 		    array(
 			    'name'              => 'metadado3',
 			    'status'            => 'publish',
 			    'collection'        => $collection,
-			    'field_type'  => 'Tainacan\Field_Types\Text',
+			    'metadata_type'  => 'Tainacan\Metadata_Types\Text',
 		    ),
 		    true
 	    );
@@ -137,12 +138,12 @@ class Items extends TAINACAN_UnitTestCase {
 	        true
         );
         
-        $this->tainacan_item_metadata_factory->create_item_metadata($i, $field, 'value_1');
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum, 'value_1');
         
         $item = $Tainacan_Items->fetch($i->get_id());
-        $meta_test = new Entities\Item_Metadata_Entity($item, $field);
+        $meta_test = new Entities\Item_Metadata_Entity($item, $metadatum);
         $this->assertTrue( $meta_test instanceof Entities\Item_Metadata_Entity );
-        $this->assertEquals( $field->get_id(), $meta_test->get_field()->get_id() );
+        $this->assertEquals( $metadatum->get_id(), $meta_test->get_metadatum()->get_id() );
         $this->assertEquals( 'value_1', $meta_test->get_value());
 
 	    $i = $this->tainacan_entity_factory->create_entity(
@@ -155,7 +156,7 @@ class Items extends TAINACAN_UnitTestCase {
 		    true
 	    );
         
-        $this->tainacan_item_metadata_factory->create_item_metadata($i, $field3, 'value_2');
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum3, 'value_2');
         
 	    $i = $this->tainacan_entity_factory->create_entity(
 		    'item',
@@ -167,9 +168,9 @@ class Items extends TAINACAN_UnitTestCase {
 		    true
 	    );
         
-        $this->tainacan_item_metadata_factory->create_item_metadata($i, $field2, 'value_2');
-        $this->tainacan_item_metadata_factory->create_item_metadata($i, $field2, 'value_3');
-        $this->tainacan_item_metadata_factory->create_item_metadata($i, $field3, 'value_3');
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum2, 'value_2');
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum2, 'value_3');
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum3, 'value_3');
 
 	    $i = $this->tainacan_entity_factory->create_entity(
 		    'item',
@@ -181,8 +182,8 @@ class Items extends TAINACAN_UnitTestCase {
 		    true
 	    );
         
-        $this->tainacan_item_metadata_factory->create_item_metadata($i, $field2, 'value_3');
-        $this->tainacan_item_metadata_factory->create_item_metadata($i, $field3, 'value_6');
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum2, 'value_3');
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum3, 'value_6');
 
         // should return all 4 items
         $test_query = $Tainacan_Items->fetch([]);
@@ -226,7 +227,7 @@ class Items extends TAINACAN_UnitTestCase {
         $test_query = $Tainacan_Items->fetch([
             'meta_query' => [
                 [
-                    'key' => $field2->get_id(),
+                    'key' => $metadatum2->get_id(),
                     'value' => 'value_3'
                 ]
             ]
@@ -237,7 +238,7 @@ class Items extends TAINACAN_UnitTestCase {
         $test_query = $Tainacan_Items->fetch([
             'meta_query' => [
                 [
-                    'key' => $field2->get_id(),
+                    'key' => $metadatum2->get_id(),
                     'value' => 'value_3'
                 ]
             ]
@@ -248,7 +249,7 @@ class Items extends TAINACAN_UnitTestCase {
         $test_query = $Tainacan_Items->fetch([
             'meta_query' => [
                 [
-                    'key' => $field3->get_id(),
+                    'key' => $metadatum3->get_id(),
                     'value' => 'value_2',
                     'compare' => '>'
                 ]
@@ -270,4 +271,148 @@ class Items extends TAINACAN_UnitTestCase {
 		$this->assertEquals(0, sizeof($test_query) );
 		
     }
+	
+	function teste_meta_query_in(){
+        $collection = $this->tainacan_entity_factory->create_entity(
+        	'collection',
+        	array(
+        	    'name'   => 'teste',
+	            'status' => 'publish'
+	        ),
+	        true
+        );
+
+	    $metadatum = $this->tainacan_entity_factory->create_entity(
+		    'metadatum',
+		    array(
+			    'name'   => 'metadado',
+			    'status' => 'publish',
+			    'collection' => $collection,
+			    'metadata_type'  => 'Tainacan\Metadata_Types\Text',
+		    ),
+		    true
+	    );
+
+        $Tainacan_Items = \Tainacan\Repositories\Items::get_instance();
+
+        $i = $this->tainacan_entity_factory->create_entity(
+        	'item',
+	        array(
+	        	'title'      => 'teste10',
+		        'collection' => $collection,
+		        'status'      => 'publish'
+	        ),
+	        true
+        );
+        
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum, 'value_10');
+		
+		$i = $this->tainacan_entity_factory->create_entity(
+        	'item',
+	        array(
+	        	'title'      => 'test100',
+		        'collection' => $collection,
+		        'status'      => 'publish'
+	        ),
+	        true
+        );
+        
+        $this->tainacan_item_metadata_factory->create_item_metadata($i, $metadatum, 'value_100');
+        
+		// should return 1 items
+        $test_query = $Tainacan_Items->fetch([
+            'meta_query' => [
+                [
+                    'key' => $metadatum->get_id(),
+                    'value' => ['value_10'],
+                    'compare' => 'IN'
+                ]
+            ]
+        ], $collection);
+        $this->assertEquals(1, $test_query->post_count);
+		
+		
+    }
+    
+    /**
+     * @group comments
+     */
+    public function test_items_comment() {
+        $collection = $this->tainacan_entity_factory->create_entity(
+            'collection',
+            array(
+                'name'   => 'collectionComments',
+                'allow_comments' => 'closed'
+            ),
+            true,
+            true
+        );
+        $item = $this->tainacan_entity_factory->create_entity(
+            'item',
+            array(
+                'title'      => 'itemComments1',
+                'collection' => $collection,
+                'comment_status' => 'open'
+            ),
+            true,
+            true
+        );
+        global $wp_query;
+        
+        $wp_query = new \WP_Query();
+        
+        $this->assertTrue(setup_postdata($item->WP_Post));
+        
+        $this->assertFalse(comments_open($item->get_id()));
+        
+        $collections = \Tainacan\Repositories\Collections::get_instance();
+        $collection->set('allow_comments', 'open');
+        $this->assertTrue($collection->validate());
+        $collections->update($collection);
+        
+        $this->assertTrue(comments_open($item->get_id()));
+        
+        $items = \Tainacan\Repositories\Items::get_instance();
+        
+        $item->set('comment_status', 'closed');
+        $this->assertTrue($item->validate());
+        $items->update($item);
+        
+        $this->assertFalse(comments_open($item->get_id()));
+    }
+	
+	public function test_delete_item() {
+		
+		$collection = $this->tainacan_entity_factory->create_entity(
+            'collection',
+            array(
+                'name'   => 'collectionComments',
+                'allow_comments' => 'closed'
+            ),
+            true,
+            true
+        );
+        $item = $this->tainacan_entity_factory->create_entity(
+            'item',
+            array(
+                'title'      => 'itemComments1',
+                'collection' => $collection,
+                'comment_status' => 'open'
+            ),
+            true,
+            true
+        );
+		
+		$item_id = $item->get_id();
+		
+		$items = \Tainacan\Repositories\Items::get_instance();
+		
+		$items->delete($item);
+		
+		$fetch_item = $items->fetch($item_id);
+		
+		$this->assertEmpty($fetch_item);
+		
+	}
+	
 }

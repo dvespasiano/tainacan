@@ -4,10 +4,18 @@ import * as mutations from './mutations';
 
 const state = {
     items: [],
+    isFromAdvancedSearch: false,
+    itemsListTemplate: '',
     collections: [],
     collection: null,
     collectionName: '',
-    attachments: []
+    collectionURL: '',
+    attachments: [],
+    collectionCommentStatus: '',
+    collectionAllowComments: '',
+    files: [],
+    collectionTotalItems: {},
+    repositoryTotalCollections: '',
 };
 
 export default {

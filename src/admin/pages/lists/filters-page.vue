@@ -1,5 +1,7 @@
 <template>
-    <div class="primary-page page-container">
+    <div class="repository-level-page page-container">
+        <tainacan-title 
+                :bread-crumb-items="[{ path: '', label: this.$i18n.get('filters') }]"/>
         <filters-list/>
     </div>
 </template>

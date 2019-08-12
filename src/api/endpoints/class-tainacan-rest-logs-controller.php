@@ -1,21 +1,22 @@
 <?php
 
+namespace Tainacan\API\EndPoints;
+
+use \Tainacan\API\REST_Controller;
 use Tainacan\Entities;
 use Tainacan\Repositories;
 use Tainacan\Repositories\Repository;
 
-class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
+class REST_Logs_Controller extends REST_Controller {
 	private $logs_repository;
 	private $log;
 
 	/**
-	 * TAINACAN_REST_Logs_Controller constructor.
+	 * REST_Logs_Controller constructor.
 	 */
 	public function __construct() {
-		$this->namespace = 'tainacan/v2';
 		$this->rest_base = 'logs';
-
-		add_action('rest_api_init', array($this, 'register_routes'));
+		parent::__construct();
 		add_action('init', array($this, 'init_objects'));
 	}
 
@@ -28,7 +29,7 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 		register_rest_route($this->namespace, '/' . $this->rest_base . '/',
 			array(
 				array(
-					'methods'             => WP_REST_Server::READABLE,
+					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array($this, 'get_items'),
 					'permission_callback' => array($this, 'get_items_permissions_check'),
 					'args'                => $this->get_collection_params()
@@ -38,19 +39,39 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 		register_rest_route($this->namespace, '/' . $this->rest_base . '/(?P<log_id>[\d]+)',
 			array(
 				array(
-					'methods'             => WP_REST_Server::READABLE,
+					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array($this, 'get_item'),
 					'permission_callback' => array($this, 'get_item_permissions_check'),
-					'args'                => $this->get_endpoint_args_for_item_schema(WP_REST_Server::READABLE)
+					'args'                => $this->get_endpoint_args_for_item_schema(\WP_REST_Server::READABLE)
 				)
 			)
 		);
 		register_rest_route($this->namespace, '/' . $this->rest_base . '/(?P<log_id>[\d]+)/approve',
 			array(
 				array(
-					'methods'             => WP_REST_Server::EDITABLE,
+					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => array($this, 'approve_item'),
 					'permission_callback' => array($this, 'approve_item_permissions_check'),
+				)
+			)
+		);
+		register_rest_route($this->namespace, '/collection/(?P<collection_id>[\d]+)/' . $this->rest_base,
+			array(
+				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => array($this, 'get_items'),
+					'permission_callback' => array($this, 'get_items_permissions_check'),
+					'args'                => $this->get_endpoint_args_for_item_schema( \WP_REST_Server::READABLE)
+				)
+			)
+		);
+		register_rest_route($this->namespace, '/item/(?P<item_id>[\d]+)/' . $this->rest_base,
+			array(
+				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => array($this, 'get_items'),
+					'permission_callback' => array($this, 'get_items_permissions_check'),
+					'args'                => $this->get_endpoint_args_for_item_schema( \WP_REST_Server::READABLE)
 				)
 			)
 		);
@@ -58,21 +79,15 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 
 	/**
 	 * @param mixed $item
-	 * @param WP_REST_Request $request
+	 * @param \WP_REST_Request $request
 	 *
-	 * @return array|WP_Error|WP_REST_Response
+	 * @return array|\WP_Error|\WP_REST_Response
 	 */
 	public function prepare_item_for_response( $item, $request ) {
 		if(!empty($item)){
 
 			if(!isset($request['fetch_only'])) {
-				$item_array = $item->__toArray();
-
-//				if ( $request['context'] === 'edit' ) {
-//					$log_diff = $item->diff();
-//
-//					$item_array['log_diff'] = $log_diff;
-//				}
+				$item_array = $item->_toArray();
 
 				unset($item_array['value']);
 				unset($item_array['old_value']);
@@ -89,13 +104,97 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 	}
 
 	/**
-	 * @param WP_REST_Request $request
+	 * @param \WP_REST_Request $request
 	 *
-	 * @return WP_Error|WP_REST_Response
-	 * @throws Exception
+	 * @return \WP_Error|\WP_REST_Response
+	 * @throws \Exception
 	 */
 	public function get_items( $request ) {
-		$args = $this->prepare_filters($request);
+
+		$args = $this->prepare_filters( $request );
+
+
+		if ($request['item_id']){
+			$item_id = $request['item_id'];
+
+			$item_repository = Repositories\Items::get_instance();
+
+			$item = $item_repository->fetch($item_id);
+
+			if(!$item){
+				return new \WP_REST_Response([
+					'error_message' => __('An item with this ID does not exist', 'tainacan'),
+					'item_id' => $item
+				], 400);
+			}
+
+			if($args &&
+			   array_key_exists('meta_query', $args) &&
+			   array_key_exists('relation', $args['meta_query'])){
+
+				$metaq = $args['meta_query'];
+
+				unset($args['meta_query']);
+
+				$args['meta_query'][] = $metaq;
+				$args['meta_query']['relation'] = 'AND';
+
+			} elseif($args &&
+			         array_key_exists('meta_query', $args)){
+				$args['meta_query']['relation'] = 'AND';
+			}
+
+			$args = array_merge_recursive(array(
+				'meta_query' => array(
+					'item_clause' => array(
+						'key'     => 'item_id',
+						'value'   => $item_id,
+						'compare' => '='
+					)
+				)
+			), $args);
+		}
+
+		if($request['collection_id']){
+			$collection_id = $request['collection_id'];
+
+			$collection_repository = Repositories\Collections::get_instance();
+
+			$collection = $collection_repository->fetch($collection_id);
+
+			if(!$collection){
+				return new \WP_REST_Response([
+					'error_message' => __('A collection with this ID does not exist', 'tainacan'),
+					'collection_id' => $collection_id
+				], 400);
+			}
+
+			if($args &&
+			   array_key_exists('meta_query', $args) &&
+			   array_key_exists('relation', $args['meta_query'])){
+
+				$metaq = $args['meta_query'];
+
+				unset($args['meta_query']);
+
+				$args['meta_query'][] = $metaq;
+				$args['meta_query']['relation'] = 'AND';
+
+			} elseif($args &&
+			         array_key_exists('meta_query', $args)){
+				$args['meta_query']['relation'] = 'AND';
+			}
+
+			$args = array_merge_recursive(array(
+				'meta_query' => array(
+					'collection_clause' => array(
+						'key'     => 'collection_id',
+						'value'   => $collection_id,
+						'compare' => '='
+					)
+				)
+			), $args);
+		}
 
 		$logs = $this->logs_repository->fetch($args);
 
@@ -115,7 +214,7 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 		$total_logs  = $logs->found_posts;
 		$max_pages = ceil($total_logs / (int) $logs->query_vars['posts_per_page']);
 
-		$rest_response = new WP_REST_Response($response, 200);
+		$rest_response = new \WP_REST_Response($response, 200);
 
 		$rest_response->header('X-WP-Total', (int) $total_logs);
 		$rest_response->header('X-WP-TotalPages', (int) $max_pages);
@@ -124,18 +223,18 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 	}
 
 	/**
-	 * @param WP_REST_Request $request
+	 * @param \WP_REST_Request $request
 	 *
-	 * @return bool|WP_Error
+	 * @return bool|\WP_Error
 	 */
 	public function get_items_permissions_check( $request ) {
-		return $this->logs_repository->can_read($this->log);
+		return current_user_can('read');
 	}
 
 	/**
-	 * @param WP_REST_Request $request
+	 * @param \WP_REST_Request $request
 	 *
-	 * @return WP_Error|WP_REST_Response
+	 * @return \WP_Error|\WP_REST_Response
 	 */
 	public function get_item( $request ) {
 		$log_id = $request['log_id'];
@@ -144,13 +243,13 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 
 		$prepared_log = $this->prepare_item_for_response( $log, $request );
 
-		return new WP_REST_Response($prepared_log, 200);
+		return new \WP_REST_Response($prepared_log, 200);
 	}
 
 	/**
-	 * @param WP_REST_Request $request
+	 * @param \WP_REST_Request $request
 	 *
-	 * @return bool|WP_Error
+	 * @return bool|\WP_Error
 	 */
 	public function get_item_permissions_check( $request ) {
 		$log = $this->logs_repository->fetch($request['log_id']);
@@ -167,9 +266,9 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 	}
 	
 	/**
-	 * @param WP_REST_Request $request
+	 * @param \WP_REST_Request $request
 	 *
-	 * @return bool|WP_Error
+	 * @return bool|\WP_Error
 	 */
 	public function approve_item_permissions_check( $request ) {
 		$log = $this->logs_repository->fetch($request['log_id']);
@@ -188,7 +287,7 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 					}
 				}
 
-				return new WP_Error();
+				return new \WP_Error();
 			}
 		}
 
@@ -197,9 +296,9 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 	
 	/**
 	 * approve a logged modification
-	 * @param WP_REST_Request $request
+	 * @param \WP_REST_Request $request
 	 *
-	 * @return WP_Error|WP_REST_Response
+	 * @return \WP_Error|\WP_REST_Response
 	 */
 	public function approve_item($request) {
 		$log = $this->logs_repository->fetch($request['log_id']);
@@ -208,7 +307,7 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 			$entity = $log->approve();
 			$prepared_entity = $this->prepare_item_for_response( $entity, $request );
 			
-			return new WP_REST_Response($prepared_entity, 200);
+			return new \WP_REST_Response($prepared_entity, 200);
 		}
 	}
 
@@ -219,7 +318,7 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 	 */
 	public function get_endpoint_args_for_item_schema( $method = null ) {
 		$endpoint_args = [];
-		if($method === WP_REST_Server::READABLE) {
+		if($method === \WP_REST_Server::READABLE) {
 			$endpoint_args['context'] = array(
 				'type'    => 'string',
 				'default' => 'view',
@@ -244,7 +343,7 @@ class TAINACAN_REST_Logs_Controller extends TAINACAN_REST_Controller {
 		$query_params = array_merge($query_params, parent::get_collection_params('log'));
 
 		$query_params['title'] = array(
-			'description' => __('Limit result set to log with specific title.'),
+			'description' => __('Limits the result set to a log with a specific title'),
 			'type'        => 'string',
 		);
 

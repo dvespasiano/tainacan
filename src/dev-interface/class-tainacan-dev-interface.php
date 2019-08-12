@@ -22,26 +22,31 @@ class DevInterface {
     }
 
     private function __construct() {
-
-        add_action('add_meta_boxes', array(&$this, 'register_metaboxes'));
-        add_action('save_post', array(&$this, 'save_post'), 10, 2);
-        add_action('admin_enqueue_scripts', array(&$this, 'add_admin_js'));
-
-        add_filter('post_type_link', array(&$this, 'permalink_filter'), 10, 3);
+        
+        add_action('admin_init', [$this, 'admin_init']);
         
         $Tainacan_Collections = \Tainacan\Repositories\Collections::get_instance();
         $Tainacan_Filters = \Tainacan\Repositories\Filters::get_instance();
         $Tainacan_Logs = \Tainacan\Repositories\Logs::get_instance();
-        $Tainacan_Fields = \Tainacan\Repositories\Fields::get_instance();
+        $Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
         $Tainacan_Taxonomies = \Tainacan\Repositories\Taxonomies::get_instance();
         
-        $repositories = [$Tainacan_Collections, $Tainacan_Filters, $Tainacan_Logs, $Tainacan_Fields, $Tainacan_Taxonomies];
+        $repositories = [$Tainacan_Collections, $Tainacan_Filters, $Tainacan_Logs, $Tainacan_Metadata, $Tainacan_Taxonomies];
         
         foreach ($repositories as $repo) {
-            $cpt = $repo->entities_type::get_post_type();
+	        $tnc_entity = new $repo->entities_type();
+	        $cpt = $tnc_entity::get_post_type();
             $this->repositories[$cpt] = $repo;
         }
         
+    }
+    
+    public function admin_init() {
+        if ( function_exists('get_current_screen')) { // check if is in wordpress builtin admin screen
+            add_action('add_meta_boxes', array(&$this, 'register_metaboxes'));
+            add_action('save_post', array(&$this, 'save_post'), 10, 2);
+            add_action('admin_enqueue_scripts', array(&$this, 'add_admin_js'));
+        }
     }
     
     function add_admin_js() {
@@ -62,39 +67,11 @@ class DevInterface {
 	    wp_localize_script( 'tainacan-dev-admin', 'tainacan_plugin', $settings );
     }
     
-    /**
-     * Filters the permalink for posts to:
-     *
-     * * Replace Collectino single permalink with the link to the post type archive for items of that collection
-     * 
-     * @return string new permalink
-     */
-    function permalink_filter($permalink, $post, $leavename) {
-        
-        $collection_post_type = \Tainacan\Entities\Collection::get_post_type();
-        
-        if (!is_admin() && $post->post_type == $collection_post_type) {
-            
-            $collection = new \Tainacan\Entities\Collection($post);
-            $items_post_type = $collection->get_db_identifier();
-            
-            $post_type_object = get_post_type_object($items_post_type);
-            
-            if (isset($post_type_object->rewrite) && is_array($post_type_object->rewrite) && isset($post_type_object->rewrite['slug']))
-                return site_url($post_type_object->rewrite['slug']);
-                
-        }
-        
-        return $permalink;
-        
-        
-        
-    }
     
     /**
      * Run through all post types attributes and add metaboxes for them.
      *
-     * Also run through all collections field and add metaboxes for its items post type
+     * Also run through all collections metadatum and add metaboxes for its items post type
      * 
      * @return void
      */
@@ -119,8 +96,8 @@ class DevInterface {
         
         foreach ($collections as $col) {
             add_meta_box(
-                $col->get_db_identifier() . '_field',
-                __('Field', 'tainacan'),
+                $col->get_db_identifier() . '_metadatum',
+                __('Metadata', 'tainacan'),
                 array(&$this, 'metadata_metabox'),
                 $col->get_db_identifier(), //post type
                 'normal' 
@@ -144,9 +121,9 @@ class DevInterface {
         $Tainacan_Logs = \Tainacan\Repositories\Logs::get_instance();
         $this->properties_metabox($Tainacan_Logs);
     }
-    function properties_metabox_Fields() {
-        $Tainacan_Fields = \Tainacan\Repositories\Fields::get_instance();
-        $this->properties_metabox($Tainacan_Fields);
+    function properties_metabox_Metadata() {
+        $Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
+        $this->properties_metabox($Tainacan_Metadata);
     }
     function properties_metabox_Taxonomies() {
         $Tainacan_Taxonomies = \Tainacan\Repositories\Taxonomies::get_instance();
@@ -160,7 +137,7 @@ class DevInterface {
         
         $entity = new $repo->entities_type($post);
         
-        wp_nonce_field( 'save_'.$repo->get_name(), $repo->get_name().'_noncename' );
+        wp_nonce_METADATUM( 'save_'.$repo->get_name(), $repo->get_name().'_noncename' );
         
         ?>
         <div id="postcustomstuff">
@@ -192,16 +169,16 @@ class DevInterface {
                                     <?php  Helpers\HtmlHelpers::collections_dropdown( $value ); ?>
                                 <?php elseif ($prop == 'collections_ids'): ?>
                                     <?php  Helpers\HtmlHelpers::collections_checkbox_list( $value ); ?>
-                                <?php elseif ( $prop == 'field' && $entity->get_collection_id() ): ?>
+                                <?php elseif ( $prop == 'metadatum' && $entity->get_collection_id() ): ?>
                                     <?php Helpers\HtmlHelpers::metadata_dropdown(
                                         $entity->get_collection_id(),
                                         ( isset( $value ) ) ? $value : '',
-                                        'tnc_prop_field'
+                                        'tnc_prop_metadatum'
                                     ) ?>
-                                <?php elseif ($prop == 'field_type_options' || $prop == 'filter_type_options'): ?>
+                                <?php elseif ($prop == 'metadata_type_options' || $prop == 'filter_type_options'): ?>
                                     <?php echo $value; ?>
-                                <?php elseif ($prop == 'field_type'): ?>
-                                    <?php echo $this->field_type_dropdown($post->ID,$value); ?>
+                                <?php elseif ($prop == 'metadata_type'): ?>
+                                    <?php echo $this->metadata_type_dropdown($post->ID,$value); ?>
                                 <?php elseif ($prop == 'filter_type'): ?>
                                     <?php echo $this->filter_type_dropdown($post->ID,$value); ?>
                                 <?php else: ?>
@@ -250,7 +227,7 @@ class DevInterface {
         if (!$entity->get_collection_id())
             $entity->set_collection($current_collection);
         
-        $field = $Tainacan_Item_Metadata->fetch($entity, 'OBJECT');
+        $metadatum = $Tainacan_Item_Metadata->fetch($entity, 'OBJECT');
         
         wp_nonce_field( 'save_metadata_'.$typenow, $typenow.'_metadata_noncename' );
         
@@ -263,14 +240,14 @@ class DevInterface {
                 
                 <thead>
                     <tr>
-                        <th class="left"><?php _e('Field', 'tainacan'); ?></th>
+                        <th class="left"><?php _e('Metadata', 'tainacan'); ?></th>
                         <th><?php _e('Value', 'tainacan'); ?></th>
                     </tr>
                 </thead>
                 
                 <tbody>
                     
-                    <?php foreach ($field as $item_meta): ?>
+                    <?php foreach ($metadatum as $item_meta): ?>
                         
                         <?php 
                             $value = $item_meta->get_value();
@@ -278,11 +255,11 @@ class DevInterface {
                         ?>
                         <tr>
                             <td>
-                                <label><?php echo $item_meta->get_field()->get_name(); ?></label><br/>
-                                <small><?php echo $item_meta->get_field()->get_description(); ?></small>
+                                <label><?php echo $item_meta->get_metadatum()->get_name(); ?></label><br/>
+                                <small><?php echo $item_meta->get_metadatum()->get_description(); ?></small>
                             </td>
                             <td>
-                                <textarea name="tnc_metadata_<?php echo $item_meta->get_field()->get_id(); ?>"><?php echo htmlspecialchars($value); ?></textarea>
+                                <textarea name="tnc_metadata_<?php echo $item_meta->get_metadatum()->get_id(); ?>"><?php echo htmlspecialchars($value); ?></textarea>
                             </td>
                         </tr>
                         
@@ -322,7 +299,7 @@ class DevInterface {
         if (!$entity->get_collection_id())
             $entity->set_collection($current_collection);
         
-        $field = $Tainacan_Item_Metadata->fetch($entity, 'OBJECT');
+        $metadatum = $Tainacan_Item_Metadata->fetch($entity, 'OBJECT');
         
         wp_nonce_field( 'save_metadata_'.$typenow, $typenow.'_metadata_noncename' );
         
@@ -335,14 +312,14 @@ class DevInterface {
                 
                 <thead>
                     <tr>
-                        <th class="left"><?php _e('Field', 'tainacan'); ?></th>
+                        <th class="left"><?php _e('Metadata', 'tainacan'); ?></th>
                         <th><?php _e('Value', 'tainacan'); ?></th>
                     </tr>
                 </thead>
                 
                 <tbody>
                     
-                    <?php foreach ($field as $item_meta): ?>
+                    <?php foreach ($metadatum as $item_meta): ?>
                         
                         <?php 
                             $value = $item_meta->get_value();
@@ -350,12 +327,12 @@ class DevInterface {
                         ?>
                         <tr>
                             <td>
-                                <label><?php echo $item_meta->get_field()->get_name(); ?></label><br/>
-                                <small><?php echo $item_meta->get_field()->get_description(); ?></small>
+                                <label><?php echo $item_meta->get_metadatum()->get_name(); ?></label><br/>
+                                <small><?php echo $item_meta->get_metadatum()->get_description(); ?></small>
                             </td>
                             <td>
-                                <?php //echo '<tainacan-text name="'.$item_meta->get_field()->get_name().'"></tainacan-text>'; ?>
-                                <?php echo  $item_meta->get_field()->get_field_type_object()->render( $item_meta ); ?>
+                                <?php //echo '<tainacan-text name="'.$item_meta->get_metadatum()->get_name().'"></tainacan-text>'; ?>
+                                <?php echo  $item_meta->get_metadatum()->get_metadata_type_object()->render( $item_meta ); ?>
                             </td>
                         </tr>
                         
@@ -370,26 +347,26 @@ class DevInterface {
         
     }
 
-    function field_type_dropdown($id,$selected) {
+    function metadata_type_dropdown($id,$selected) {
 
-        $Tainacan_Fields = \Tainacan\Repositories\Fields::get_instance();
+        $Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
 
         $class = ( class_exists( $selected ) ) ? new $selected() : '';
 
         if(is_object( $class )){
-            $selected =  str_replace('Tainacan\Field_Types\\','', get_class( $class ) );
+            $selected =  str_replace('Tainacan\Metadata_Types\\','', get_class( $class ) );
         }
 
-        $field_types = $Tainacan_Fields->fetch_field_types('NAME');
+        $metadata_types = $Tainacan_Metadata->fetch_metadata_types('NAME');
         ?>
-            <select name="tnc_prop_field_type">
-                <?php foreach ($field_types as $field_type): ?>
-                    <option value="<?php echo $field_type; ?>" <?php selected($field_type, $selected) ?>><?php echo $field_type; ?></option>
+            <select name="tnc_prop_metadata_type">
+                <?php foreach ($metadata_types as $metadata_type): ?>
+                    <option value="<?php echo $metadata_type; ?>" <?php selected($metadata_type, $selected) ?>><?php echo $metadata_type; ?></option>
                 <?php endforeach; ?>
             </select>
             <?php
              if( $class ){
-                 $options = get_post_meta($id,'field_type_options',true);
+                 $options = get_post_meta($id,'metadata_type_options',true);
                  $class->set_options($options);
                  echo $class->form();
              }
@@ -471,26 +448,26 @@ class DevInterface {
                 }
                 
                 
-                $entity->set_mapped_property($prop, $value);
+                $entity->set($prop, $value);
 
 
                 if ($entity->validate_prop($prop)) {
 
                     // we cannot user repository->insert here, it would create an infinite loop
-                    if ($prop == 'field_type') {
+                    if ($prop == 'metadata_type') {
                         //TODO: This can be better
-                        $class = '\Tainacan\Field_Types\\'.$value;
-                        update_post_meta($post_id, 'field_type_options', $_POST['field_type_'.strtolower( $value ) ] );
-                        update_post_meta($post_id, 'field_type',  wp_slash( get_class( new $class() ) ) );
-                    } elseif($prop == 'field_type_options' || $prop == 'filter_type_options') {
+                        $class = '\Tainacan\Metadata_Types\\'.$value;
+                        update_post_meta($post_id, 'metadata_type_options', $_POST['metadata_type_'.strtolower( $value ) ] );
+                        update_post_meta($post_id, 'metadata_type',  wp_slash( get_class( new $class() ) ) );
+                    } elseif($prop == 'metadata_type_options' || $prop == 'filter_type_options') {
                         continue;
                     } elseif ($prop == 'filter_type') {
                         $class = str_replace('\\\\','\\','\Tainacan\Filter_Types\\'.$value );
                         update_post_meta($post_id, 'filter_type_options', $_POST['filter_type_'.strtolower( $value ) ] );
                         update_post_meta($post_id, 'filter_type',  wp_slash( get_class( new $class() ) ) );
                     } elseif ($mapped['map'] == 'meta' || $mapped['map'] == 'meta_multi') {
-
-                        $repo->insert_metadata($entity, $prop);
+                        $diffs = [];
+                        $repo->insert_metadata($entity, $prop, $diffs);
                         
         			}
                 }
@@ -506,7 +483,7 @@ class DevInterface {
             // or I could try to initialize an entity and find out what type it is
 
             $Tainacan_Collections = \Tainacan\Repositories\Collections::get_instance();
-            $Tainacan_Fields = \Tainacan\Repositories\Fields::get_instance();
+            $Tainacan_Metadata = \Tainacan\Repositories\Metadata::get_instance();
             $Tainacan_Items = \Tainacan\Repositories\Items::get_instance();
             $Tainacan_Item_Metadata = \Tainacan\Repositories\Item_Metadata::get_instance();
 
@@ -523,16 +500,17 @@ class DevInterface {
                 // for new Items
                 if (!$entity->get_collection_id()) {
                     $entity->set_collection($cpts[$post_type]);
-                    $Tainacan_Items->insert_metadata($entity, 'collection_id');
+                    $diffs = [];
+                    $Tainacan_Items->insert_metadata($entity, 'collection_id', $diffs);
                 }
                 
                 
-                $metalist = $Tainacan_Fields->fetch_by_collection($cpts[$post_type], [], 'OBJECT');
+                $metalist = $Tainacan_Metadata->fetch_by_collection($cpts[$post_type], [], 'OBJECT');
                 
                 foreach ($metalist as $meta) {
                     $item_meta = new \Tainacan\Entities\Item_Metadata_Entity($entity, $meta);
 
-                    $pos = strpos($item_meta->get_field()->get_field_type(), 'Core');
+                    $pos = strpos($item_meta->get_metadatum()->get_metadata_type(), 'Core');
                     if( $pos !== false ){
                         continue;
                     }
