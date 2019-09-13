@@ -91,6 +91,10 @@ registerBlockType('tainacan/carousel-items-list', {
             type: Boolean,
             value: true
         },
+        cropImage: {
+            type: Boolean,
+            value: true
+        },
         showCollectionHeader: {
             type: Boolean,
             value: false
@@ -138,6 +142,7 @@ registerBlockType('tainacan/carousel-items-list', {
             autoPlaySpeed,
             loopSlides,
             hideTitle,
+            cropImage,
             showCollectionHeader,
             showCollectionLabel,
             isLoadingCollection,
@@ -165,19 +170,35 @@ registerBlockType('tainacan/carousel-items-list', {
                         id={ isNaN(item.id) ? item.id : 'item-id-' + item.id }
                         href={ item.url } 
                         target="_blank">
-                        <img
-                            src={ 
-                                item.thumbnail && item.thumbnail['tainacan-medium'][0] && item.thumbnail['tainacan-medium'][0] 
-                                    ?
-                                item.thumbnail['tainacan-medium'][0] 
-                                    :
-                                (item.thumbnail && item.thumbnail['thumbnail'][0] && item.thumbnail['thumbnail'][0]
-                                    ?    
-                                item.thumbnail['thumbnail'][0] 
-                                    : 
-                                `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
-                            }
-                            alt={ item.title ? item.title : __( 'Thumbnail', 'tainacan' ) }/>
+                        { cropImage ?
+                            <img
+                                src={ 
+                                    item.thumbnail && item.thumbnail['tainacan-medium-full'][0] && item.thumbnail['tainacan-medium-full'][0] 
+                                        ?
+                                    item.thumbnail['tainacan-medium-full'][0] 
+                                        :
+                                    (item.thumbnail && item.thumbnail['medium_large'][0] && item.thumbnail['medium_large'][0]
+                                        ?    
+                                    item.thumbnail['medium_large'][0] 
+                                        : 
+                                    `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
+                                }
+                                alt={ item.title ? item.title : __( 'Thumbnail', 'tainacan' ) }/>
+                        :
+                            <img
+                                src={ 
+                                    item.thumbnail && item.thumbnail['tainacan-medium'][0] && item.thumbnail['tainacan-medium'][0] 
+                                        ?
+                                    item.thumbnail['tainacan-medium'][0] 
+                                        :
+                                    (item.thumbnail && item.thumbnail['thumbnail'][0] && item.thumbnail['thumbnail'][0]
+                                        ?    
+                                    item.thumbnail['thumbnail'][0] 
+                                        : 
+                                    `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
+                                }
+                                alt={ item.title ? item.title : __( 'Thumbnail', 'tainacan' ) }/>
+                        }
                         { !hideTitle ? <span>{ item.title ? item.title : '' }</span> : null }
                     </a>
                 </li>
@@ -447,6 +468,17 @@ registerBlockType('tainacan/carousel-items-list', {
 
                                         setAttributes({ arrowsPosition: arrowsPosition }); 
                                     }}/>
+                                <ToggleControl
+                                    label={__('Crop Thumbnail', 'tainacan')}
+                                    help={ !cropImage ? __('Toggle to crop thumbnail to fit a squared shape', 'tainacan') : __('Do not crop thumbnail to fit a squared shape', 'tainacan')}
+                                    checked={ cropImage ? true : false }
+                                    onChange={ ( isChecked ) => {
+                                            cropImage = isChecked;
+                                            setAttributes({ cropImage: cropImage });
+                                            setContent();
+                                        } 
+                                    }
+                                />
                             </div>                           
                         </PanelBody>
 
@@ -705,6 +737,7 @@ registerBlockType('tainacan/carousel-items-list', {
             autoPlaySpeed,
             loopSlides,
             hideTitle,
+            cropImage,
             showCollectionHeader,
             showCollectionLabel,
             collectionBackgroundColor,
@@ -721,6 +754,7 @@ registerBlockType('tainacan/carousel-items-list', {
                     auto-play-speed={ autoPlaySpeed }
                     loop-slides={ '' + loopSlides }
                     hide-title={ '' + hideTitle }
+                    crop-image={ '' + cropImage }
                     show-collection-header={ '' + showCollectionHeader }
                     show-collection-label={ '' + showCollectionLabel }
                     collection-background-color={ collectionBackgroundColor }
@@ -731,5 +765,141 @@ registerBlockType('tainacan/carousel-items-list', {
                     id={ 'wp-block-tainacan-carousel-items-list_' + blockId }>
                         { content }
                 </div>
-    }
+    },
+    deprecated: [
+        {
+            attributes: {
+                content: {
+                    type: 'array',
+                    source: 'children',
+                    selector: 'div'
+                },
+                collectionId: {
+                    type: String,
+                    default: undefined
+                },
+                items: {
+                    type: Array,
+                    default: []
+                },
+                isModalOpen: {
+                    type: Boolean,
+                    default: false
+                },
+                searchURL: {
+                    type: String,
+                    default: undefined
+                },
+                selectedItems: {
+                    type: Array,
+                    default: []
+                },
+                itemsRequestSource: {
+                    type: String,
+                    default: undefined
+                },
+                maxItemsNumber: {
+                    type: Number,
+                    value: undefined
+                },
+                isLoading: {
+                    type: Boolean,
+                    value: false
+                },
+                isLoadingCollection: {
+                    type: Boolean,
+                    value: false
+                },
+                loadStrategy: {
+                    type: String,
+                    value: 'search'
+                },
+                arrowsPosition: {
+                    type: String,
+                    value: 'search'
+                },
+                autoPlay: {
+                    type: Boolean,
+                    value: false
+                },
+                autoPlaySpeed: {
+                    type: Number,
+                    value: 3
+                },
+                loopSlides: {
+                    type: Boolean,
+                    value: false
+                },
+                hideTitle: {
+                    type: Boolean,
+                    value: true
+                },
+                showCollectionHeader: {
+                    type: Boolean,
+                    value: false
+                },
+                showCollectionLabel: {
+                    type: Boolean,
+                    value: false
+                },
+                collection: {
+                    type: Object,
+                    value: undefined
+                },
+                blockId: {
+                    type: String,
+                    default: undefined
+                },
+                collectionBackgroundColor: {
+                    type: String,
+                    default: "#454647"
+                },
+                collectionTextColor: {
+                    type: String,
+                    default: "#ffffff"
+                }
+            },
+            save({ attributes, className }){
+                const {
+                    content, 
+                    blockId,
+                    collectionId,  
+                    searchURL,
+                    selectedItems,
+                    arrowsPosition,
+                    loadStrategy,
+                    maxItemsNumber,
+                    autoPlay,
+                    autoPlaySpeed,
+                    loopSlides,
+                    hideTitle,
+                    showCollectionHeader,
+                    showCollectionLabel,
+                    collectionBackgroundColor,
+                    collectionTextColor
+                } = attributes;
+                return <div 
+                            className={ className }
+                            search-url={ searchURL }
+                            selected-items={ JSON.stringify(selectedItems) }
+                            arrows-position={ arrowsPosition }
+                            load-strategy={ loadStrategy }
+                            collection-id={ collectionId }  
+                            auto-play={ '' + autoPlay }
+                            auto-play-speed={ autoPlaySpeed }
+                            loop-slides={ '' + loopSlides }
+                            hide-title={ '' + hideTitle }
+                            show-collection-header={ '' + showCollectionHeader }
+                            show-collection-label={ '' + showCollectionLabel }
+                            collection-background-color={ collectionBackgroundColor }
+                            collection-text-color={ collectionTextColor }
+                            max-items-number={ maxItemsNumber }
+                            tainacan-api-root={ tainacan_plugin.root }
+                            tainacan-base-url={ tainacan_plugin.base_url }
+                            id={ 'wp-block-tainacan-carousel-items-list_' + blockId }>
+                                { content }
+                        </div>
+            }
+        }
+    ]
 });

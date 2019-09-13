@@ -67,6 +67,21 @@
                                 :href="item.url"
                                 target="_blank">
                             <img
+                                v-if="cropImage"
+                                :src=" 
+                                    item.thumbnail && item.thumbnail['tainacan-medium-full'][0] && item.thumbnail['tainacan-medium-full'][0] 
+                                        ?
+                                    item.thumbnail['tainacan-medium-full'][0] 
+                                        :
+                                    (item.thumbnail && item.thumbnail['medium_large'][0] && item.thumbnail['medium_large'][0]
+                                        ?    
+                                    item.thumbnail['medium_large'][0] 
+                                        : 
+                                    `${tainacanBaseUrl}/admin/images/placeholder_square.png`)
+                                "
+                                :alt="item.title ? item.title : $root.__('Thumbnail', 'tainacan')">
+                            <img
+                                v-else
                                 :src=" 
                                     item.thumbnail && item.thumbnail['tainacan-medium'][0] && item.thumbnail['tainacan-medium'][0] 
                                         ?
@@ -240,6 +255,7 @@ export default {
         autoPlaySpeed: Number,
         loopSlides: Boolean,
         hideTitle: Boolean,
+        cropImage: Boolean,
         showCollectionHeader: Boolean,
         showCollectionLabel: Boolean,
         collectionBackgroundColor: String,
