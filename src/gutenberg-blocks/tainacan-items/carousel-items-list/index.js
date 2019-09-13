@@ -909,10 +909,6 @@ registerBlockType('tainacan/carousel-items-list', {
                         }
                     }
                 );
-            },
-            isEligible(attributes) {
-                console.log(attributes['cropImage'] == undefined)
-                return attributes['cropImage'] == undefined;
             }
         }
     ]
