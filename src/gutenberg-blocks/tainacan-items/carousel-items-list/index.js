@@ -173,20 +173,6 @@ registerBlockType('tainacan/carousel-items-list', {
                         { cropImage ?
                             <img
                                 src={ 
-                                    item.thumbnail && item.thumbnail['tainacan-medium-full'][0] && item.thumbnail['tainacan-medium-full'][0] 
-                                        ?
-                                    item.thumbnail['tainacan-medium-full'][0] 
-                                        :
-                                    (item.thumbnail && item.thumbnail['medium_large'][0] && item.thumbnail['medium_large'][0]
-                                        ?    
-                                    item.thumbnail['medium_large'][0] 
-                                        : 
-                                    `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
-                                }
-                                alt={ item.title ? item.title : __( 'Thumbnail', 'tainacan' ) }/>
-                        :
-                            <img
-                                src={ 
                                     item.thumbnail && item.thumbnail['tainacan-medium'][0] && item.thumbnail['tainacan-medium'][0] 
                                         ?
                                     item.thumbnail['tainacan-medium'][0] 
@@ -194,6 +180,20 @@ registerBlockType('tainacan/carousel-items-list', {
                                     (item.thumbnail && item.thumbnail['thumbnail'][0] && item.thumbnail['thumbnail'][0]
                                         ?    
                                     item.thumbnail['thumbnail'][0] 
+                                        : 
+                                    `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
+                                }
+                                alt={ item.title ? item.title : __( 'Thumbnail', 'tainacan' ) }/>
+                        :
+                            <img
+                                src={ 
+                                    item.thumbnail && item.thumbnail['tainacan-medium-full'][0] && item.thumbnail['tainacan-medium-full'][0] 
+                                        ?
+                                    item.thumbnail['tainacan-medium-full'][0] 
+                                        :
+                                    (item.thumbnail && item.thumbnail['medium_large'][0] && item.thumbnail['medium_large'][0]
+                                        ?    
+                                    item.thumbnail['medium_large'][0] 
                                         : 
                                     `${tainacan_plugin.base_url}/admin/images/placeholder_square.png`)
                                 }
@@ -909,6 +909,10 @@ registerBlockType('tainacan/carousel-items-list', {
                         }
                     }
                 );
+            },
+            isEligible(attributes) {
+                console.log(attributes['cropImage'] == undefined)
+                return attributes['cropImage'] == undefined;
             }
         }
     ]
