@@ -899,6 +899,16 @@ registerBlockType('tainacan/carousel-items-list', {
                             id={ 'wp-block-tainacan-carousel-items-list_' + blockId }>
                                 { content }
                         </div>
+            },
+            migrate(attributes) {
+                return Object.assign( 
+                    attributes, { 
+                        cropImage: {
+                            type: Boolean,
+                            value: true
+                        }
+                    }
+                );
             }
         }
     ]
