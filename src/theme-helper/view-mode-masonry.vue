@@ -53,13 +53,14 @@
                     <!-- Thumbnail -->
                     <div 
                             v-if="item.thumbnail != undefined"
-                            class="tainacan-masonry-item-thumbnail"
-                            :style="{ backgroundImage: 'url(' + (item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath)) + ')' }">  
+                            class="tainacan-masonry-item-thumbnail">  
                         <img 
                                 :alt="$i18n.get('label_thumbnail')"
                                 :style="{ minHeight: getItemImageHeight(item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][1] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[1] : 120), item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][2] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[2] : 120)) + 'px'}"
-                                class="skeleton"
-                                :src="item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath)" >  
+                                v-lazy="{
+                                    src: item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath),
+                                    error: thumbPlaceholderPath
+                                }" >  
                     </div>
                 </a>
             </masonry>

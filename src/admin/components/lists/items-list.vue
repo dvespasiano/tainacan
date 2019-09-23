@@ -285,7 +285,10 @@
                             class="tainacan-masonry-item-thumbnail"
                             :style="{ backgroundImage: 'url(' + (item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath)) + ')' }">
                         <img 
-                                v-lazy="item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath)"
+                                v-lazy="{
+                                    src: item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath),
+                                    error: thumbPlaceholderPath
+                                }"
                                 :alt="$i18n.get('label_thumbnail')">
                     </div>
                     

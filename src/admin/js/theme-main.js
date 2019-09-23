@@ -3,6 +3,7 @@ import Vue from 'vue';
 import Buefy from 'buefy';
 import VTooltip from 'v-tooltip';
 import VueMasonry from 'vue-masonry-css';
+import VueLazyload from 'vue-lazyload';
 
 // Custom elements
 import FilterCustomInterval from '../../classes/filter-types/custom-interval/CustomInterval.vue';
@@ -42,6 +43,7 @@ Vue.use(UserPrefsPlugin);
 Vue.use(RouterHelperPlugin);
 Vue.use(StatusHelperPlugin);
 Vue.use(ConsolePlugin, {visual: false});
+Vue.use(VueLazyload);
 
 
 Vue.component('tainacan-filter-item', TaincanFiltersList);

@@ -9,7 +9,7 @@ import VTooltip from 'v-tooltip';
 import VueMasonry from 'vue-masonry-css';
 import draggable from 'vuedraggable';
 import VueTheMask from 'vue-the-mask';
-import VueLazyload from 'vue-lazyload'
+import VueLazyload from 'vue-lazyload';
 
 // Custom elements
 import Text from '../../classes/metadata-types/text/Text.vue';

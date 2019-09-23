@@ -85,18 +85,20 @@
             img {
                 width: 100%;
                 height: auto;    
-                transition: height 0.2s ease;
+                transition: height ease 0.3s, min-height ease 0.3s;
                 display: block;
-            }
-            img:not(.skeleton) {
-                visibility: hidden;
             }
 
             // Masonry skeleton is white due to 
             // background-blend-mode
-            .skeleton {
+            img[lazy=loading] {
                 background: #fff;
                 color: transparent !important;
+
+                -webkit-animation: skeleton-animation 1.8s ease infinite;
+                -moz-animation: skeleton-animation 1.8s ease infinite;
+                -o-animation: skeleton-animation 1.8s ease infinite;
+                animation: skeleton-animation 1.8s ease infinite;
             }
         }
 
