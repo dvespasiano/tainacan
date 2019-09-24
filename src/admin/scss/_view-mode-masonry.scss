@@ -75,11 +75,9 @@
             background-color: #f6f6f6;
             background-blend-mode: multiply;
             border-radius: 0px;
-            // transition: background-color 0.3s;
 
             &:hover {
                 cursor: pointer;
-                // background-color: white;
             } 
         
             img {
@@ -99,6 +97,12 @@
                 -moz-animation: skeleton-animation 1.8s ease infinite;
                 -o-animation: skeleton-animation 1.8s ease infinite;
                 animation: skeleton-animation 1.8s ease infinite;
+            }
+            img[lazy=loaded] {
+                -webkit-animation: appear 0.4s ease-out;
+                -moz-animation: appear 0.4s ease-out;
+                -o-animation: appear 0.4s ease-out;
+                animation: appear 0.4s ease-out;
             }
         }
 

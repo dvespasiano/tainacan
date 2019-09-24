@@ -282,8 +282,7 @@
                             @click.left="onClickItem($event, item)"
                             @click.right="onRightClickItem($event, item)"
                             v-if="item.thumbnail != undefined"
-                            class="tainacan-masonry-item-thumbnail"
-                            :style="{ backgroundImage: 'url(' + (item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath)) + ')' }">
+                            class="tainacan-masonry-item-thumbnail">
                         <img 
                                 v-lazy="{
                                     src: item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath),
