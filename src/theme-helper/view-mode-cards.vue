@@ -14,7 +14,7 @@
                     </p>
                     <p>{{ $i18n.get('info_no_item_found') }}</p>
                 </div>
-            </section>
+            </section> 
 
             <!-- SKELETON LOADING -->
             <div
@@ -57,14 +57,19 @@
                     <!-- Remaining metadata -->  
                     <div class="media">
                         <div 
-                                :style="{ backgroundImage: 'url(' + (item['thumbnail']['tainacan-medium'] ? item['thumbnail']['tainacan-medium'][0] : (item['thumbnail'].medium ? item['thumbnail'].medium[0] : thumbPlaceholderPath)) + ')' }"
+                                v-lazy:background-image="{
+                                    src: item['thumbnail']['tainacan-medium'] ? item['thumbnail']['tainacan-medium'][0] : (item['thumbnail'].medium ? item['thumbnail'].medium[0] : thumbPlaceholderPath),
+                                    error: thumbPlaceholderPath
+                                }"
                                 class="card-thumbnail">
                             <img 
                                     :alt="$i18n.get('label_thumbnail')"
                                     v-if="item.thumbnail != undefined"
-                                    :src="item['thumbnail']['tainacan-medium'] ? item['thumbnail']['tainacan-medium'][0] : (item['thumbnail'].medium ? item['thumbnail'].medium[0] : thumbPlaceholderPath)">  
+                                    v-lazy="{
+                                        src: item['thumbnail']['tainacan-medium'] ? item['thumbnail']['tainacan-medium'][0] : (item['thumbnail'].medium ? item['thumbnail'].medium[0] : thumbPlaceholderPath),
+                                        error: thumbPlaceholderPath
+                                    }">
                         </div>
-                        <div class="skeleton"/>
                         
                         <div class="list-metadata media-body">
                            <!-- Description -->

@@ -74,22 +74,28 @@
             display: block;
             position: relative;
 
-            .skeleton {
-                width: 255px;
-                height: 255px;
-                position: absolute;
-                z-index: -1;
-                background-color: #e0e0e0;
-                bottom: 0;
-            }
-            
             img {
                 width: 255px;
                 height: 255px;
                 height: auto;
                 border-radius: 0px;
                 margin-bottom: -5px;
-                visibility: hidden;
+            }
+
+            &[lazy=loading] {
+                background-color: #e0e0e0;
+                min-width: 255px;
+                min-height: 255px;
+                -webkit-animation: skeleton-animation 1.8s ease infinite;
+                -moz-animation: skeleton-animation 1.8s ease infinite;
+                -o-animation: skeleton-animation 1.8s ease infinite;
+                animation: skeleton-animation 1.8s ease infinite;
+            }
+            &[lazy=loaded] {
+                -webkit-animation: appear 0.4s ease-out;
+                -moz-animation: appear 0.4s ease-out;
+                -o-animation: appear 0.4s ease-out;
+                animation: appear 0.4s ease-out;
             }
         }
         
