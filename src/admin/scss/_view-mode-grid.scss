@@ -77,9 +77,9 @@
             img {
                 width: 255px;
                 height: 255px;
-                height: auto;
                 border-radius: 0px;
                 margin-bottom: -5px;
+                visibility: hidden;
             }
 
             &[lazy=loading] {

@@ -43,8 +43,9 @@ Vue.use(UserPrefsPlugin);
 Vue.use(RouterHelperPlugin);
 Vue.use(StatusHelperPlugin);
 Vue.use(ConsolePlugin, {visual: false});
-Vue.use(VueLazyload);
-
+Vue.use(VueLazyload, {
+    preLoad: 1.5
+});
 
 Vue.component('tainacan-filter-item', TaincanFiltersList);
 

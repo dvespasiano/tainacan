@@ -64,7 +64,9 @@ Vue.use(UserCapabilitiesPlugin);
 Vue.use(StatusHelperPlugin);
 Vue.use(ConsolePlugin, {visual: false});
 Vue.use(VueTheMask);
-Vue.use(VueLazyload);
+Vue.use(VueLazyload, {
+    preLoad: 1.5
+});
 
 /* Metadata */
 Vue.component('tainacan-text', Text);
