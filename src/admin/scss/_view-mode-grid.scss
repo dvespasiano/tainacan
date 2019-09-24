@@ -83,7 +83,7 @@
             }
 
             &[lazy=loading] {
-                background-color: #e0e0e0;
+                background-color: $gray1;
                 min-width: 255px;
                 min-height: 255px;
                 -webkit-animation: skeleton-animation 1.8s ease infinite;

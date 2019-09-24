@@ -85,24 +85,24 @@
                 height: auto;    
                 transition: height ease 0.3s, min-height ease 0.3s;
                 display: block;
-            }
+                
+                // Masonry skeleton is white due to 
+                // background-blend-mode
+                &[lazy=loading] {
+                    background: #fff;
+                    color: transparent !important;
 
-            // Masonry skeleton is white due to 
-            // background-blend-mode
-            img[lazy=loading] {
-                background: #fff;
-                color: transparent !important;
-
-                -webkit-animation: skeleton-animation 1.8s ease infinite;
-                -moz-animation: skeleton-animation 1.8s ease infinite;
-                -o-animation: skeleton-animation 1.8s ease infinite;
-                animation: skeleton-animation 1.8s ease infinite;
-            }
-            img[lazy=loaded] {
-                -webkit-animation: appear 0.4s ease-out;
-                -moz-animation: appear 0.4s ease-out;
-                -o-animation: appear 0.4s ease-out;
-                animation: appear 0.4s ease-out;
+                    -webkit-animation: skeleton-animation 1.8s ease infinite;
+                    -moz-animation: skeleton-animation 1.8s ease infinite;
+                    -o-animation: skeleton-animation 1.8s ease infinite;
+                    animation: skeleton-animation 1.8s ease infinite;
+                }
+                &[lazy=loaded] {
+                    -webkit-animation: appear 0.4s ease-out;
+                    -moz-animation: appear 0.4s ease-out;
+                    -o-animation: appear 0.4s ease-out;
+                    animation: appear 0.4s ease-out;
+                }
             }
         }
 

@@ -111,7 +111,7 @@
             margin: 0;
 
             &[lazy=loading] {
-                background-color: #e0e0e0;
+                background-color: $gray1;
                 min-width: 170px !important;
                 min-height: 170px !important;
                 -webkit-animation: skeleton-animation 1.8s ease infinite;

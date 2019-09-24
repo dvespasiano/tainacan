@@ -9,7 +9,7 @@
                     v-if="!isLoading && items.length <= 0"
                     class="section">
                 <div class="content has-text-gray4 has-text-centered">
-                    <p>
+                    <p> 
                         <span class="icon is-large">
                             <i class="tainacan-icon tainacan-icon-36px tainacan-icon-items" />
                         </span>
@@ -71,13 +71,14 @@
                                         v-if="item.thumbnail != undefined">
                                     <img 
                                             :alt="$i18n.get('label_thumbnail')"
-                                            :src="item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath)">  
-                                    <div 
                                             :style="{ 
                                                 minHeight: getItemImageHeight(item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][1] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[1] : 120), item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][2] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[2] : 120)) + 'px',
                                                 marginTop: '-' + getItemImageHeight(item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][1] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[1] : 120), item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][2] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[2] : 120)) + 'px'
                                             }"
-                                            class="skeleton"/>
+                                            v-lazy="{
+                                                src: item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath),
+                                                error: thumbPlaceholderPath
+                                            }">  
                                 </div>
                                 <span 
                                         v-for="(column, index) in displayedMetadata"
@@ -119,28 +120,6 @@ export default {
             masonryCols: {default: 4, 1919: 3, 1407: 2, 1215: 2, 1023: 1, 767: 1, 343: 1}
         }
     },
-    watch: {
-        isFiltersMenuCompressed() {
-            if (this.$refs.masonryWrapper != undefined && 
-                this.$refs.masonryWrapper.children[0] != undefined && 
-                this.$refs.masonryWrapper.children[0].children[0] != undefined && 
-                this.$refs.masonryWrapper.children[0].children[0].clientWidth != undefined) {
-                this.containerWidthDiscount = jQuery(window).width() - this.$refs.masonryWrapper.clientWidth;
-            }
-            this.$forceUpdate();
-        },
-        containerWidthDiscount() {
-            let obj = {};
-            obj['default'] = 4;
-            obj[1980 - this.containerWidthDiscount] = 3;
-            obj[1460 - this.containerWidthDiscount] = 2;
-            obj[1275 - this.containerWidthDiscount] = 2;
-            obj[1080 - this.containerWidthDiscount] = 1;
-            obj[828 - this.containerWidthDiscount] = 1;
-            obj[400] = 1;
-            this.masonryCols = obj;
-        }
-    },
     methods: {
         goToItemPage(item) {
             window.location.href = item.url;   
@@ -164,15 +143,10 @@ export default {
             let itemWidth = 120;
             return (imageHeight*itemWidth)/imageWidth;
         },
-        recalculateContainerWidth: _.debounce( function() {
-            if (this.$refs.masonryWrapper != undefined && 
-                this.$refs.masonryWrapper.children[0] != undefined && 
-                this.$refs.masonryWrapper.children[0].children[0] != undefined && 
-                this.$refs.masonryWrapper.children[0].children[0].clientWidth != undefined) {
-                this.containerWidthDiscount = jQuery(window).width() - this.$refs.masonryWrapper.clientWidth;
-            }
-            this.$forceUpdate();
-        }, 500)
+        handleLoadedImages({ el }) {
+            el.style.setProperty('min-height', 'unset');
+            el.style.setProperty('margin-top', 'unset');
+        }
     },
     mounted() {
 
@@ -181,15 +155,14 @@ export default {
             this.$refs.masonryWrapper.children[0].children[0] != undefined && 
             this.$refs.masonryWrapper.children[0].children[0].clientWidth != undefined) {
                 this.itemColumnWidth = this.$refs.masonryWrapper.children[0].children[0].clientWidth;
-                this.recalculateContainerWidth();
             } else
                 this.itemColumnWidth = 202;
     },
     created() {
-        window.addEventListener('resize', this.recalculateContainerWidth);  
+        this.$Lazyload.$on('loaded', this.handleLoadedImages);
     },
     beforeDestroy() {
-        window.removeEventListener('resize', this.recalculateContainerWidth);
+        this.$Lazyload.$off('loaded');
     }
 }
 </script>

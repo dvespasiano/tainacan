@@ -654,7 +654,10 @@
                                 <img 
                                         :alt="$i18n.get('label_thumbnail')"
                                         v-if="item.thumbnail != undefined"
-                                        :src="item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath)"> 
+                                        v-lazy="{
+                                            src: item['thumbnail']['tainacan-medium-full'] ? item['thumbnail']['tainacan-medium-full'][0] : (item['thumbnail'].medium_large ? item['thumbnail'].medium_large[0] : thumbPlaceholderPath),
+                                            error: thumbPlaceholderPath
+                                        }"> 
                             </div>
                             <span 
                                     v-for="(column, index) in tableMetadata"
