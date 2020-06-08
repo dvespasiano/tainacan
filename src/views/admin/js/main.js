@@ -21,6 +21,7 @@ import Relationship from '../components/metadata-types/relationship/Relationship
 import Taxonomy from '../components/metadata-types/taxonomy/Taxonomy.vue';
 import Compound from '../components/metadata-types/compound/Compound.vue';
 import User from '../components/metadata-types/user/User.vue';
+import Url from '../components/metadata-types/url/Url.vue';
 
 import FormRelationship from '../components/metadata-types/relationship/FormRelationship.vue';
 import FormTaxonomy from '../components/metadata-types/taxonomy/FormTaxonomy.vue';
@@ -97,6 +98,7 @@ Vue.component('tainacan-relationship', Relationship);
 Vue.component('tainacan-taxonomy', Taxonomy);
 Vue.component('tainacan-compound', Compound);
 Vue.component('tainacan-user', User);
+Vue.component('tainacan-url', Url);
 
 /* Metadata Option forms */
 Vue.component('tainacan-form-relationship', FormRelationship);
