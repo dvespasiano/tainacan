@@ -27,6 +27,9 @@ function tainacan_blocks_add_gutenberg_blocks_actions() {
 	add_action('init', 'tainacan_blocks_register_tainacan_carousel_collections_list');
 	add_action('init', 'tainacan_blocks_register_tainacan_facets_list');
 	add_action('init', 'tainacan_blocks_register_tainacan_item_submission_form');
+	//style-text and border line text
+	add_action('init', 'tainacan_blocks_register_tainacan_title_style');
+	add_action('init', 'tainacan_blocks_register_tainacan_box');
 
 	add_action('init', 'tainacan_blocks_add_plugin_settings');
 	
@@ -331,6 +334,68 @@ function tainacan_blocks_register_tainacan_search_bar(){
 		register_block_type( 'tainacan/search-bar', array(
 			'editor_script' => 'search-bar',
 			'style'         => 'search-bar'
+		) );
+	}
+}
+
+function tainacan_blocks_register_tainacan_title_style(){
+	global $TAINACAN_BASE_URL;
+
+	wp_enqueue_script(
+		'title-style-script',
+		$TAINACAN_BASE_URL . '/assets/js/block_search_bar_script.js',
+		array('wp-components')
+	);
+
+	wp_register_script(
+		'search-bar',
+		$TAINACAN_BASE_URL . '/assets/js/block_search_bar.js',
+		array('wp-blocks', 'wp-i18n', 'wp-element', 'wp-components', 'wp-editor')
+	);
+
+	wp_set_script_translations('text-style-list', 'tainacan');
+
+	wp_register_style(
+		'search-bar',
+		$TAINACAN_BASE_URL . '/assets/css/tainacan-gutenberg-block-text-style.css',
+		array('wp-edit-blocks', 'tainacan-blocks-common-styles')
+	);
+
+	if (function_exists('register_block_type')) {
+		register_block_type( 'tainacan/text-style', array(
+			'editor_script' => 'text-style',
+			'style'         => 'text-style'
+		) );
+	}
+}
+
+function tainacan_blocks_register_tainacan_box(){
+	global $TAINACAN_BASE_URL;
+
+	wp_enqueue_script(
+		'box-script',
+		$TAINACAN_BASE_URL . '/assets/js/block_box_script.js',
+		array('wp-components')
+	);
+
+	wp_register_script(
+		'box',
+		$TAINACAN_BASE_URL . '/assets/js/block_box.js',
+		array('wp-blocks', 'wp-i18n', 'wp-element', 'wp-components', 'wp-editor')
+	);
+
+	wp_set_script_translations('text-box', 'tainacan');
+
+	wp_register_style(
+		'bo',
+		$TAINACAN_BASE_URL . '/assets/css/tainacan-gutenberg-block-box.css',
+		array('wp-edit-blocks', 'tainacan-blocks-common-styles')
+	);
+
+	if (function_exists('register_block_type')) {
+		register_block_type( 'tainacan/box', array(
+			'editor_script' => 'box',
+			'style'         => 'box'
 		) );
 	}
 }
